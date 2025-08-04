@@ -58,7 +58,7 @@ Under the following terms:
 
 > Any unauthorized use of this code, model, or concept — including reproduction, training, or integration into commercial or research products — will be considered a violation of intellectual property and subject to legal action.
 
-Showcase of the Project - [https://drive.google.com/file/d/1_aOsyjw9U2sP4UoKko1HF1RCH5PD2LYW/view](https://drive.google.com/file/d/1_aOsyjw9U2sP4UoKko1HF1RCH5PD2LYW/view?usp=sharing)](Video)
+Showcase of the Project - [https://drive.google.com/file/d/1_aOsyjw9U2sP4UoKko1HF1RCH5PD2LYW/view](Video)
 
 _The game is currently in testing and is only available in **Italian**, but an English translation is planned for the future._
 
