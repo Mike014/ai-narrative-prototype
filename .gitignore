@@ -1,0 +1,8 @@
+# Ignora i file del modello e altri asset pesanti
+DialoghiConUnEco/entity_model/
+DialoghiConUnEco/build/
+*.safetensors
+*.bin
+*.zip
+*.exe
+

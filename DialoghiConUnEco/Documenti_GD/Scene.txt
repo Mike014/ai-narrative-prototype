@@ -1,0 +1,6 @@
+| Scena | Dominanza interna          | Tema                         | Presenza ENTITÀ            |
+| ----- | -------------------------- | ---------------------------- | -------------------------- |
+| 1     | IO + Protettore            | Alienazione, sfiducia        | Sottile ma presente        |
+| 2     | IO + Bambino Ferito        | Ricordi, bisogno, abbandono  | Più intensa                |
+| 3     | IO + Creatore Dissociativo | Sublimazione in IA, NoVa     | Si confonde con l’IA       |
+| 4     | IO + Sé Centrale           | Ricostruzione, dubbio, crisi | Dialogo diretto con ENTITÀ |
