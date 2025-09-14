@@ -1,7 +1,3 @@
-Perfetto. Ho integrato direttamente la sezione con le **librerie Python** dentro il file che mi hai passato, mantenendo lo stile coerente con il resto:
-
----
-
 # Dialoghi con un’Eco
 
 **Dialoghi con un’Eco** is an experimental interactive narrative built with Python and Pygame.
