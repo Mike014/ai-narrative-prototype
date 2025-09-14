@@ -3,6 +3,14 @@ import sys
 from scenes import scene1
 from menu import mostra_menu
 
+# Imposta il mixer in modo stabile per Windows + laptop moderni
+pygame.mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=2048)
+pygame.init()
+
+# Più canali e 2 riservati per effetti UI/ducking
+pygame.mixer.set_num_channels(16)
+pygame.mixer.set_reserved(2)
+
 
 def main():
     print("Avvio gioco...")
