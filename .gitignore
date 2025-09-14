@@ -6,3 +6,4 @@ DialoghiConUnEco/build/
 *.zip
 *.exe
 __pycache__/
+*.asd
