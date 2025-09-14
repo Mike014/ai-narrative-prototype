@@ -76,7 +76,7 @@ def mostra_menu(screen: pygame.Surface, clock: pygame.time.Clock):
     glitch_scroll_sound = None
     try:
         glitch_scroll_sound = pygame.mixer.Sound("assets/audio/glitch_scroll.ogg")
-        glitch_scroll_sound.set_volume(0.55)
+        glitch_scroll_sound.set_volume(0.40)
     except Exception:
         glitch_scroll_sound = None
 

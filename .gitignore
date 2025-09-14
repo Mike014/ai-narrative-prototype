@@ -5,4 +5,4 @@ DialoghiConUnEco/build/
 *.bin
 *.zip
 *.exe
-
+__pycache__/
