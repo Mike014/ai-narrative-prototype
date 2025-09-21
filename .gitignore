@@ -7,3 +7,29 @@ DialoghiConUnEco/build/
 *.exe
 __pycache__/
 *.asd
+
+
+# Non tracciare variabili locali e chiavi API
+.env
+*.env
+.env.*
+
+# File temporanei Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# File di log e cache
+*.log
+*.sqlite3
+*.db
+*.npy
+*.npz
+
+# Config editor/IDE
+.vscode/
+.idea/
+
+# Checkpoint/weights locali (se usi modelli finetunati)
+*.pt
+*.ckpt
