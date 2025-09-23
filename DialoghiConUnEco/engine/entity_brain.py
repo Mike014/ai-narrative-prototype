@@ -93,7 +93,7 @@ class TemporalConfig:
     min_gap_long: float = 120.0
 
     # Probabilità di base
-    base_prob: float = 0.50
+    base_prob: float = 0.65
 
     # Pesi della combinazione
     w_tension: float = 0.30
@@ -119,7 +119,7 @@ class TemporalConfig:
 
     # Normalizzazioni e soglie
     max_silence_cap: float = 300.0
-    target_speak_rate_per_min: float = 1.0  # quanto spesso "vorrebbe" parlare in media
+    target_speak_rate_per_min: float = 1.5 # quanto spesso "vorrebbe" parlare in media
 
 
 class Emotion(str, Enum):
