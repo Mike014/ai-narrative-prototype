@@ -3,6 +3,7 @@ import sys
 from scenes import scene1
 from scenes import scene2
 from scenes import scene3
+from scenes import scene4
 from menu import mostra_menu
 
 # Imposta il mixer in modo stabile per Windows + laptop moderni
@@ -17,7 +18,7 @@ pygame.mixer.set_reserved(2)
 def mostra_scelta_scene(screen, clock):
     """Mini-menu per scegliere quale scena avviare"""
     font = pygame.font.SysFont("consolas", 48)
-    options = ["Scena 1", "Scena 2", "Scena 3","Torna indietro"]
+    options = ["Scena 1", "Scena 2", "Scena 3", "Scena 4", "Torna indietro"]
     selected = 0
 
     choosing = True
@@ -49,6 +50,8 @@ def mostra_scelta_scene(screen, clock):
                         return "scene2"
                     elif options[selected] == "Scena 3":
                         return "scene3"
+                    elif options[selected] == "Scena 4":
+                        return "scene4"
                     else:
                         return "indietro"
 
@@ -60,7 +63,7 @@ def main():
     pygame.init()
     pygame.mixer.init()
 
-    screen = pygame.display.set_mode((1280, 1024))
+    screen = pygame.display.set_mode((1280, 720))
     pygame.display.set_caption("Dialoghi con un’Eco")
     clock = pygame.time.Clock()
 
@@ -75,6 +78,8 @@ def main():
             scene2.avvia_scena(screen, clock)
         elif scena_scelta == "scene3":
             scene3.avvia_scena(screen, clock)
+        elif scena_scelta == "scene4":
+            scene4.avvia_scena(screen, clock)
         else:
             main()  # torna al menu principale
 
