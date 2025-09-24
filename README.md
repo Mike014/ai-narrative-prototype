@@ -103,7 +103,4 @@ Under the following terms:
 
 © 2025 Michele Grimaldi
 
----
-
-Vuoi che lo converta direttamente in un **README.md** pronto per GitHub\*\*, con anche la sezione `requirements.txt` già linkata?
 
