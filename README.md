@@ -5,6 +5,7 @@ It draws inspiration from *Black Mirror: Bandersnatch*, combining interactive fi
 
 The experience is minimal yet conceptually rich — a digital echo chamber where an AI observes, listens, and responds... but only when it wants to.
 
+**YouTube Showcase Playlist** - [Watch the Video](https://www.youtube.com/watch?v=0Y-_Rt0oZkU&list=PLgKASgLUSpNYKyusWO6iHcxTe-odeIho1)
 ---
 
 ## Concept
