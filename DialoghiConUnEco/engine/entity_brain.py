@@ -254,11 +254,11 @@ class TemporalState:
         sS, sM, sL = self.ema_silence_s, self.ema_silence_m, self.ema_silence_l
         spoke_recently = (now - (self.last_spoke_at or 0.0)) < 8.0
 
-        low_tension   = tM < 0.35
-        high_tension  = tM > 0.65
+        low_tension   = tM < 0.45
+        high_tension  = tM > 0.55
         
-        high_silence      = (sS > 0.60) or (sM > 0.50) or (sL > 0.45)
-        very_high_silence = (sS > 0.80) or (sM > 0.65) or (sL > 0.55)
+        high_silence  = (sS > 0.40) or (sM > 0.35) or (sL > 0.30)
+        very_high_silence = (sS > 0.60) or (sM > 0.50) or (sL > 0.45)
 
         new_emotion = self.emotion
 
