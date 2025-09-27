@@ -15,12 +15,14 @@ Env utili:
 - ENT_TOAST_PROB (0.25)       : probabilità toast
 - ENT_TOAST_COOLDOWN (8.0)    : cooldown minimo tra toast (sec)
 - ENT_TOAST_DEDUPE_WINDOW (30): finestra anti-duplicati per testo (sec)
-- ENT_ICONIFY_ON_TOAST (1)    : minimizza il gioco quando apre Notepad
+- ENT_OPEN_NOTE_ON_TOAST (1)  : apre la nota quando fa un toast e iconifica il gioco
+- ENT_ICONIFY_ON_TOAST (1)    : minimizza il gioco dopo aver aperto la nota
 - ENT_CAPTION_PROB (0.25)
 - HF_ENABLED (0), HF_MODEL_ID, HUGGINGFACE_API_KEY
+- ENT_ICON_PATH               : path esplicito per l'icona delle notifiche (override)
 """
 
-import os, re, json, time, random, logging, platform, subprocess
+import os, re, json, time, random, logging, platform, subprocess, tempfile
 from pathlib import Path
 from typing import Dict, Optional, List, Tuple
 
@@ -38,21 +40,31 @@ except Exception:
 log = logging.getLogger(__name__)
 WORD = re.compile(r"[a-zàèéìòù]+", re.IGNORECASE)
 
+
 def _bool_env(name: str, default: bool) -> bool:
     v = os.getenv(name)
-    if v is None: return default
-    return v.strip().lower() in {"1","true","yes","on"}
+    if v is None:
+        return default
+    return v.strip().lower() in {"1", "true", "yes", "on"}
+
 
 def _float_env(name: str, default: float) -> float:
     v = os.getenv(name)
-    if v is None: return default
-    try: return float(v)
-    except Exception: return default
+    if v is None:
+        return default
+    try:
+        return float(v)
+    except Exception:
+        return default
+
 
 class EntityDirector:
     _CLEARED_ONCE = False  # cancella il file una volta per run
 
     def __init__(self, asset_func, model_name="entity_director.h5", tok_name="entity_director_tok.json"):
+        """
+        asset_func: funzione tipo project_path(*parts) che ritorna uno string path dalla root del progetto.
+        """
         self.asset = asset_func
 
         # Config nota/toast
@@ -64,12 +76,12 @@ class EntityDirector:
         self.clear_note_on_start = _bool_env("ENT_CLEAR_NOTE_ON_START", True)
 
         self.toasts_enabled = _bool_env("ENT_OS_TOAST_ENABLED", False)
-        self.toast_prob = _float_env("ENT_TOAST_PROB", 0.050) # questo è la probabilità di mostrare un toast
-        self.toast_cooldown = _float_env("ENT_TOAST_COOLDOWN", 8.0) # cooldown minimo tra toast (sec)
+        self.toast_prob = _float_env("ENT_TOAST_PROB", 0.050)  # probabilità toast opzionale
+        self.toast_cooldown = _float_env("ENT_TOAST_COOLDOWN", 8.0)  # cooldown minimo tra toast (sec)
         self.toast_dedupe_window = _float_env("ENT_TOAST_DEDUPE_WINDOW", 30.0)
         self.open_note_on_toast = _bool_env("ENT_OPEN_NOTE_ON_TOAST", True)
         self._last_toast_time = 0.0
-        self._recent_msgs: List[Tuple[str,float]] = []  # [(hash, ts)]
+        self._recent_msgs: List[Tuple[str, float]] = []  # [(hash, ts)]
 
         # Caption (scrive su nota)
         self.caption_prob = _float_env("ENT_CAPTION_PROB", 0.25)
@@ -89,13 +101,15 @@ class EntityDirector:
         if self.clear_note_on_start and not EntityDirector._CLEARED_ONCE:
             p = self._desktop_note_path()
             try:
-                if p.exists(): p.unlink()
+                if p.exists():
+                    p.unlink()
                 EntityDirector._CLEARED_ONCE = True
             except Exception as e:
                 log.warning("[EntityDirector] Impossibile cancellare nota all'avvio: %s", e)
 
         # Keras opzionale
-        self.model = None; self.tok = None
+        self.model = None
+        self.tok = None
         if TF_OK:
             try:
                 mp = self.asset("models", model_name)
@@ -110,44 +124,117 @@ class EntityDirector:
                 log.warning("[EntityDirector] Errore Keras: %s", e)
 
         try:
-            if not pygame.font.get_init(): pygame.font.init()
+            if not pygame.font.get_init():
+                pygame.font.init()
             self.toast_font = pygame.font.SysFont("consolas", 20)
         except Exception:
             self.toast_font = None
 
-    # -------- scoring --------
-    def _score_with_model(self, text: str) -> Dict[str,float]:
+        # Icona per le notifiche (logo scena intro)
+        self.app_icon_path = self._resolve_app_icon()
+
+    # ------------------------------------------------------------------ ICONA --
+    def _resolve_app_icon(self) -> Optional[str]:
+        """
+        Prova a usare l'icona del logo dell'intro:
+        - ENT_ICON_PATH (se impostata) vince su tutto.
+        - Su Windows preferisce .ico (logo.ico).
+        - Su Linux/macOS vanno bene png/jpg.
+        - Se su Windows non trovi .ico e c'è Pillow, converte al volo png/jpg a .ico temporanea.
+        """
+        env_icon = os.getenv("ENT_ICON_PATH", "").strip()
+        if env_icon and os.path.exists(env_icon):
+            return env_icon
+
+        # Candidati .ico (Windows)
+        candidates_ico = [
+            self.asset("assets", "background", "logo.ico"),
+            self.asset("assets", "icons", "logo.ico"),
+            self.asset("assets", "icons", "app.ico"),
+        ]
+        for p in candidates_ico:
+            if os.path.exists(p):
+                return p
+
+        # Immagini comuni
+        img_candidates = [
+            self.asset("assets", "background", "logo.png"),
+            self.asset("assets", "background", "logo.jpg"),
+            self.asset("assets", "background", "logo.jpeg"),
+            self.asset("assets", "background", "logo_what_am_i.PNG"),
+        ]
+
+        # Non-Windows: png/jpg ok
+        if platform.system() != "Windows":
+            for p in img_candidates:
+                if os.path.exists(p):
+                    return p
+            return None
+
+        # Windows: serve .ico; prova conversione via Pillow se disponibile
+        for p in img_candidates:
+            if os.path.exists(p):
+                try:
+                    from PIL import Image  # opzionale
+                    ico_tmp = Path(tempfile.gettempdir()) / "dialoghi_logo_tmp.ico"
+                    img = Image.open(p).convert("RGBA")
+                    img.save(
+                        ico_tmp,
+                        format="ICO",
+                        sizes=[(256, 256), (128, 128), (64, 64), (32, 32), (16, 16)],
+                    )
+                    if ico_tmp.exists():
+                        return str(ico_tmp)
+                except Exception:
+                    pass
+                break  # tenta solo sul primo valido
+        return None
+
+    # --------------------------------------------------------------- SCORING --
+    def _score_with_model(self, text: str) -> Dict[str, float]:
         seq = pad_sequences(self.tok.texts_to_sequences([text]), maxlen=96)
         y = self.model.predict(seq, verbose=0)[0]
-        return {"tensione":float(y[0]),"oppressione":float(y[1]),"nostalgia":float(y[2]),"ruminazione":float(y[3])}
-
-    def _score_fallback(self, text: str) -> Dict[str,float]:
-        t = text.lower()
-        def score(keys): return float(min(1.0, sum(0.3 for k in keys if k in t)))
         return {
-            "tensione":   score(["acufene","metal","premere","tempia","pianto","scuro","grigio","puzzo","vuoto","lamento"]),
-            "oppressione":score(["pancia in giù","oppress","ferita","trauma","peso","scuro","vuoto"]),
-            "nostalgia":  score(["lei","collana","braccialetto","ricordo","loop","tema","accordi","la maggiore"]),
-            "ruminazione":score(["sarei","ossessione","pensavo","dimenticare","come posso","perché"]),
+            "tensione": float(y[0]),
+            "oppressione": float(y[1]),
+            "nostalgia": float(y[2]),
+            "ruminazione": float(y[3]),
         }
 
-    def score_channels(self, dialog_text: str) -> Dict[str,float]:
+    def _score_fallback(self, text: str) -> Dict[str, float]:
+        t = text.lower()
+
+        def score(keys):
+            return float(min(1.0, sum(0.3 for k in keys if k in t)))
+
+        return {
+            "tensione": score(
+                ["acufene", "metal", "premere", "tempia", "pianto", "scuro", "grigio", "puzzo", "vuoto", "lamento"]
+            ),
+            "oppressione": score(["pancia in giù", "oppress", "ferita", "trauma", "peso", "scuro", "vuoto"]),
+            "nostalgia": score(["lei", "collana", "braccialetto", "ricordo", "loop", "tema", "accordi", "la maggiore"]),
+            "ruminazione": score(["sarei", "ossessione", "pensavo", "dimenticare", "come posso", "perché"]),
+        }
+
+    def score_channels(self, dialog_text: str) -> Dict[str, float]:
         if self.model is not None and self.tok is not None:
-            try: return self._score_with_model(dialog_text)
-            except Exception as e: log.warning("[EntityDirector] Errore inferenza Keras: %s", e)
+            try:
+                return self._score_with_model(dialog_text)
+            except Exception as e:
+                log.warning("[EntityDirector] Errore inferenza Keras: %s", e)
         return self._score_fallback(dialog_text)
 
-    # -------- caption (scrive su nota) --------
-    def make_caption(self, chans: Dict[str,float]) -> Optional[str]:
+    # --------------------------------------------------------------- CAPTION --
+    def make_caption(self, chans: Dict[str, float]) -> Optional[str]:
         now = time.time()
-        if now - self.last_caption_time < self.caption_cooldown: return None
-        if random.random() > self.caption_prob: return None
+        if now - self.last_caption_time < self.caption_cooldown:
+            return None
+        if random.random() > self.caption_prob:
+            return None
         self.last_caption_time = now
 
-        t,o,n,r = chans["tensione"],chans["oppressione"],chans["nostalgia"],chans["ruminazione"]
-        candidates = []
-        if t > 0.6 and o > 0.6:
-            candidates = []
+        t, o, n, r = chans["tensione"], chans["oppressione"], chans["nostalgia"], chans["ruminazione"]
+        candidates: List[str] = []
         if t > 0.6 and o > 0.6:
             candidates += [
                 "La tempia pulsa: il corpo ricorda quello che la mente nega.",
@@ -194,25 +281,27 @@ class EntityDirector:
         self.queue_fake_toast(random.choice(candidates))
         return None
 
-    # -------- dedupe helper --------
+    # -------------------------------------------------------------- DEDUPE ----
     def _suppress_repeated(self, text: str) -> bool:
         now = time.time()
         cutoff = now - self.toast_dedupe_window
-        self._recent_msgs = [(h,t) for (h,t) in self._recent_msgs if t >= cutoff]
+        self._recent_msgs = [(h, t) for (h, t) in self._recent_msgs if t >= cutoff]
         h = str(hash(text))
         for (hh, _) in self._recent_msgs:
-            if hh == h: return True
+            if hh == h:
+                return True
         self._recent_msgs.append((h, now))
-        # limita la lista
         if len(self._recent_msgs) > 64:
             self._recent_msgs = self._recent_msgs[-64:]
         return False
 
-    # -------- toast + nota (apri breve e chiudi auto) --------
+    # ----------------------------------------------------------- TOAST/NOTE ---
     def queue_fake_toast(self, text: str, dialog_context: Optional[str] = None, ms: int = 1800):
         now = time.time()
-        if now - self._last_toast_time < self.toast_cooldown: return
-        if self._suppress_repeated(text): return
+        if now - self._last_toast_time < self.toast_cooldown:
+            return
+        if self._suppress_repeated(text):
+            return
 
         # Scrivi su file prima (così la nota mostra anche questo contenuto)
         note_path = self.write_desktop_note(text)
@@ -224,30 +313,43 @@ class EntityDirector:
             opened_ok = self._open_note_brief(note_path)
 
         if opened_ok:
+            # Mostra sempre una notifica visibile, con icona se disponibile
             self._guaranteed_notify(text, ms=ms)
-        
+
         if _bool_env("ENT_ICONIFY_ON_TOAST", True) and opened_ok:
             try:
                 pygame.display.iconify()
             except Exception as e:
                 log.info("[EntityDirector] Iconify fallito: %s", e)
-
         else:
+            # Ramo opzionale: toast OS (senza iconify) governato da probabilità
             if self.toasts_enabled and random.random() < self.toast_prob:
                 try:
                     from plyer import notification
-                    notification.notify(title="Dialoghi con un'Eco", message=text, timeout=max(1, int(ms/1000)))
+                    icon_kw = {}
+                    if self.app_icon_path:
+                        icon_kw["app_icon"] = self.app_icon_path
+                    notification.notify(
+                        title="Dialoghi con un'Eco",
+                        message=text,
+                        timeout=max(1, int(ms / 1000)),
+                        **icon_kw,
+                    )
                 except Exception as e:
                     log.info("[EntityDirector] Toast OS non disponibile: %s", e)
-                if platform.system()=="Windows":
+                if platform.system() == "Windows":
+                    # Fallback best-effort
                     try:
                         import ctypes, threading
+
                         def _box():
                             ctypes.windll.user32.MessageBoxW(0, text, "Dialoghi con un'Eco", 0x40)  # MB_ICONINF
+
                         threading.Thread(target=_box, daemon=True).start()
                     except Exception as e2:
                         log.info("[EntityDirector] MessageBox fallback fallito: %s", e2)
 
+            # Eventuale risposta modello (opzionale)
             if dialog_context and self.hf_enabled:
                 try:
                     self.write_model_response(dialog_context)
@@ -261,13 +363,13 @@ class EntityDirector:
         # se c'è una finestra precedente, la chiudo subito (per refresh/timer)
         self._maybe_close_note(force=True)
         try:
-            if platform.system()=="Windows":
+            if platform.system() == "Windows":
                 import ctypes
                 si = subprocess.STARTUPINFO()
                 si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                 si.wShowWindow = ctypes.c_int(3)  # SW_MAXIMIZE
                 self.note_proc = subprocess.Popen(["notepad.exe", str(path)], startupinfo=si)
-            elif platform.system()=="Darwin":
+            elif platform.system() == "Darwin":
                 self.note_proc = subprocess.Popen(["open", str(path)])
             else:
                 self.note_proc = subprocess.Popen(["xdg-open", str(path)])
@@ -296,9 +398,9 @@ class EntityDirector:
         except Exception as e:
             log.info("[EntityDirector] PowerShell close fallback failed: %s", e)
 
-    def _maybe_close_note(self, force: bool=False):
+    def _maybe_close_note(self, force: bool = False):
         # su piattaforme non Windows non possiamo garantire la chiusura
-        if platform.system()!="Windows": 
+        if platform.system() != "Windows":
             self.note_proc = None
             return
 
@@ -310,8 +412,9 @@ class EntityDirector:
                     time.sleep(0.1)
                     if self.note_proc.poll() is None:
                         subprocess.Popen(
-                            ["taskkill","/PID",str(self.note_proc.pid),"/F"],
-                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                            ["taskkill", "/PID", str(self.note_proc.pid), "/F"],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
                         )
                 except Exception as e:
                     log.info("[EntityDirector] terminate/kill PID fallito: %s", e)
@@ -323,98 +426,127 @@ class EntityDirector:
             self._close_note_windows_robust()
             self.note_proc = None  # disaccoppia comunque
 
-    # -------- HF (opzionale) --------
+    # --------------------------------------------------------------- HF OPT. ---
     def __init_hf_client(self):
-        if not self.hf_enabled: raise RuntimeError("HF non abilitato (HF_ENABLED=False)")
-        if self.hf_client is not None: return
+        if not self.hf_enabled:
+            raise RuntimeError("HF non abilitato (HF_ENABLED=False)")
+        if self.hf_client is not None:
+            return
         from huggingface_hub import InferenceClient
+
         tok = os.getenv("HUGGINGFACE_API_KEY")
-        if not tok: raise ValueError("HUGGINGFACE_API_KEY non impostata")
+        if not tok:
+            raise ValueError("HUGGINGFACE_API_KEY non impostata")
         self.hf_client = InferenceClient(self.hf_model_id, token=tok)
 
     def write_model_response(self, dialog_context: str):
-        if not self.hf_enabled: raise RuntimeError("HF non abilitato (HF_ENABLED=False)")
+        if not self.hf_enabled:
+            raise RuntimeError("HF non abilitato (HF_ENABLED=False)")
         try:
             self.__init_hf_client()
-            sys_prompt = ("Tu sei ENTITÀ. Rispondi in modo crudele, una sola frase, tra 10 e 14 parole, "
-                          "senza virgolette né prefissi, termina con punto.")
-            resp = self.hf_client.chat_completion(
-                messages=[{"role":"system","content":sys_prompt},
-                          {"role":"user","content":dialog_context}],
-                max_tokens=32, temperature=0.78, top_p=0.9, model=self.hf_model_id
+            sys_prompt = (
+                "Tu sei ENTITÀ. Rispondi in modo crudele, una sola frase, tra 10 e 14 parole, "
+                "senza virgolette né prefissi, termina con punto."
             )
-            if hasattr(resp,"choices") and resp.choices:
-                text = (resp.choices[0].message.get("content","") or "").strip()
+            resp = self.hf_client.chat_completion(
+                messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": dialog_context}],
+                max_tokens=32,
+                temperature=0.78,
+                top_p=0.9,
+                model=self.hf_model_id,
+            )
+            if hasattr(resp, "choices") and resp.choices:
+                text = (resp.choices[0].message.get("content", "") or "").strip()
             else:
                 text = str(resp).strip()
             p = self._desktop_note_path()
-            with open(p,"a",encoding="utf-8") as f:
-                f.write("\n[ENTITÀ] "+text+"\n")
+            with open(p, "a", encoding="utf-8") as f:
+                f.write("\n[ENTITÀ] " + text + "\n")
         except Exception as e:
             log.warning("[EntityDirector] Errore HF: %r", e)
             try:
                 p = self._desktop_note_path()
-                with open(p,"a",encoding="utf-8") as f:
+                with open(p, "a", encoding="utf-8") as f:
                     f.write(f"\n[ERRORE MODELLO] {repr(e)}\n")
             except Exception as fe:
                 log.warning("[EntityDirector] Errore scrittura errore modello: %s", fe)
 
-    # -------- nota su Desktop --------
+    # ------------------------------------------------------------- DESKTOP NOTE
     def _desktop_note_path(self) -> Path:
         if self.note_dir:
             self.note_dir.mkdir(parents=True, exist_ok=True)
             return self.note_dir / self.note_basename
-        desktop = Path(os.environ.get("USERPROFILE","")) / "Desktop"
-        if not desktop.exists(): desktop = Path.home() / "Desktop"
+        desktop = Path(os.environ.get("USERPROFILE", "")) / "Desktop"
+        if not desktop.exists():
+            desktop = Path.home() / "Desktop"
         return desktop / self.note_basename
 
     def write_desktop_note(self, text: str) -> Optional[Path]:
-        if not self.allow_desktop_note: return None
+        if not self.allow_desktop_note:
+            return None
         try:
             p = self._desktop_note_path()
-            with open(p,"a",encoding="utf-8") as f:
-                f.write(text.strip()+"\n")
+            with open(p, "a", encoding="utf-8") as f:
+                f.write(text.strip() + "\n")
             return p
         except Exception as e:
             log.warning("[EntityDirector] Impossibile scrivere nota: %s", e)
             return None
-        
+
+    # ----------------------------------------------------- NOTIFY GARANTITA ---
     def _guaranteed_notify(self, text: str, ms: int = 1800) -> None:
         """Mostra SEMPRE una notifica visibile quando stiamo per iconify.
-        Ignora ENT_OS_TOAST_ENABLED, probabilità e cooldown."""
+        Ignora ENT_OS_TOAST_ENABLED, probabilità e cooldown.
+        Usa l'icona del logo se disponibile.
+        """
         try:
             from plyer import notification
-            notification.notify(title="Dialoghi con un'Eco", message=text, timeout=max(1, int(ms/1000)))
+
+            icon_kw = {}
+            if self.app_icon_path:
+                icon_kw["app_icon"] = self.app_icon_path
+
+            notification.notify(
+                title="Dialoghi con un'Eco",
+                message=text,
+                timeout=max(1, int(ms / 1000)),
+                **icon_kw,
+            )
             return
         except Exception as e:
             log.info("[EntityDirector] Toast OS non disponibile: %s", e)
-        
+
+        # Fallback Windows: MessageBox (senza icona personalizzata)
         try:
-            if platform.system()=="Windows":
+            if platform.system() == "Windows":
                 import ctypes
+
                 ctypes.windll.user32.MessageBoxW(0, text, "Dialoghi con un'Eco", 0x40)
+                # second box non bloccante
                 def _box():
                     ctypes.windll.user32.MessageBoxW(0, text, "Dialoghi con un'Eco", 0x40)  # MB_ICONINF
+
                 import threading
+
                 threading.Thread(target=_box, daemon=True).start()
         except Exception as e2:
             log.info("[EntityDirector] MessageBox fallback fallito: %s", e2)
 
-    # -------- tick per auto-chiusura (call ogni frame) --------
+    # ---------------------------------------------------------- TICK/MAINT ----
     def draw_fake_toasts(self, screen):
         self._maybe_close_note(force=False)
         return
 
-    # -------- compat util --------
+    # -------------------------------------------------------------- UTILITY ---
     @staticmethod
     def open_path_crossplatform(path: Path):
         try:
-            if platform.system()=="Windows":
+            if platform.system() == "Windows":
                 try:
                     subprocess.Popen(["notepad.exe", str(path)])
                 except Exception:
                     os.startfile(str(path))  # type: ignore[attr-defined]
-            elif platform.system()=="Darwin":
+            elif platform.system() == "Darwin":
                 subprocess.Popen(["open", str(path)])
             else:
                 subprocess.Popen(["xdg-open", str(path)])

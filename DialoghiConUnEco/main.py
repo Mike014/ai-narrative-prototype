@@ -1,5 +1,6 @@
 import pygame
 import sys
+import webbrowser
 from menu import mostra_menu
 
 # Import scene modules (Volume 1)
@@ -8,6 +9,9 @@ from scenes.Volume1 import scene2_echo_speaks
 from scenes.Volume1 import scene3_voice_entita
 from scenes.Volume1 import scene4_os_collapse
 from scenes.Volume1 import scene5_what_am_i
+
+# Import scene modules (Volume 2)
+from scenes.Volume2 import scene6_eyes_on_fire
 
 # -----------------------------------------------------------------------------
 # Setup audio + pygame
@@ -26,6 +30,10 @@ VOLUME1_SCENES = {
     "The Voice of ENTITA’": (scene3_voice_entita, "avvia_scena"),
     "The OS Collapse": (scene4_os_collapse, "avvia_scena"),
     "What Am I?": (scene5_what_am_i, "run_intro"),
+}
+
+VOLUME2_SCENES = {
+    "Eyes on Fire": (scene6_eyes_on_fire, "avvia_scena"),
 }
 
 # -----------------------------------------------------------------------------
@@ -89,15 +97,24 @@ def draw_list_menu(screen, clock, title, options, initial_index=0):
 # Menu Volume
 # -----------------------------------------------------------------------------
 def mostra_volumi(screen, clock):
-    options = ["Volume 1", "Torna indietro"]
+    options = ["Volume 1", "Volume 2", "Torna indietro"]
     sel = draw_list_menu(screen, clock, "SELEZIONA VOLUME", options)
     if sel == "Volume 1":
         return "volume1"
+    elif sel == "Volume 2":
+        return "volume2"
     return None
 
 def mostra_scelta_scene_volume1(screen, clock):
     options = list(VOLUME1_SCENES.keys()) + ["Torna indietro"]
     sel = draw_list_menu(screen, clock, "VOLUME 1", options)
+    if sel == "Torna indietro" or sel is None:
+        return None
+    return sel
+
+def mostra_scelta_scene_volume2(screen, clock):
+    options = list(VOLUME2_SCENES.keys()) + ["Torna indietro"]
+    sel = draw_list_menu(screen, clock, "VOLUME 2", options)
     if sel == "Torna indietro" or sel is None:
         return None
     return sel
@@ -123,25 +140,34 @@ def main():
                 scena = mostra_scelta_scene_volume1(screen, clock)
                 if scena and scena in VOLUME1_SCENES:
                     module, func_name = VOLUME1_SCENES[scena]
-                    # Avvio scena
                     getattr(module, func_name)(screen, clock)
-                    # Al ritorno dalla scena si rientra al menu principale
                     continue
-                # Torna al menu principale se annullato
+                continue
+            elif volume == "volume2":
+                scena = mostra_scelta_scene_volume2(screen, clock)
+                if scena and scena in VOLUME2_SCENES:
+                    module, func_name = VOLUME2_SCENES[scena]
+                    getattr(module, func_name)(screen, clock)
+                    continue
                 continue
 
         elif scelta == "crediti":
-            # TODO: chiama la tua scena crediti quando pronta
-            print("TODO: scena crediti")
-            # piccolo delay per non rimbalzare subito
-            pygame.time.delay(500)
+            # Apri direttamente il tuo sito (nuova scheda) e iconifica la finestra del gioco
+            try:
+                webbrowser.open("https://mike014.github.io/michele-portfolio/index.html", new=2)
+            except Exception as e:
+                print("[CREDITI] Impossibile aprire il sito:", e)
+            try:
+                pygame.display.iconify()
+            except Exception:
+                pass
+            pygame.time.delay(600)  # piccolo delay anti-rimbalzo
 
         elif scelta == "esci":
             pygame.quit()
             sys.exit(0)
 
         else:
-            # Protezione: se mostra_menu restituisce altro/None, ripresenta
             pygame.time.delay(100)
 
 # -----------------------------------------------------------------------------

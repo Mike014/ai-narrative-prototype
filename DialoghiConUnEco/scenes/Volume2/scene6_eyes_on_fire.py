@@ -8,7 +8,6 @@ from typing import List, Tuple, Optional
 import numpy as np
 import pygame
 from dotenv import load_dotenv
-
 load_dotenv()
 
 # ------------------------------- Project root --------------------------------
@@ -24,8 +23,17 @@ THIS_FILE  = Path(__file__).resolve()
 BASE_DIR   = find_project_root(THIS_FILE)
 ASSETS_DIR = BASE_DIR / "assets"
 
+# ------------------------------- Import engine modules -------------------------------
+from engine.entity_director import EntityDirector   
+if not EntityDirector:
+    print("[FATAL] engine.entity_director non trovato. Controlla che la struttura delle cartelle sia intatta.")
+    sys.exit(1)
+
 def asset_path(*parts) -> str:
     return str(ASSETS_DIR.joinpath(*parts))
+
+def project_path(*parts) -> str:
+    return str(BASE_DIR.joinpath(*parts))
 
 # --------------------------------- Visual ------------------------------------
 WIDTH, HEIGHT = 1280, 720
@@ -112,11 +120,15 @@ def _build_timeline() -> List[Tuple[float, str]]:
     ]
 
     # --- ENTITÀ (OS) fino a fine brano ---
-    tl.append((ENTITA_BEATS, "[NOTIFICA OS] Processo interrotto. Nessun salvataggio disponibile."))
+    tl.append((ENTITA_BEATS, "[NOTIFICA OS] Ora sai cos'è ENTITÀ. Sono la parte di te che sa la verità. E resto qui per sempre."))
 
     return tl
 
 TIMELINE_BEATS: List[Tuple[float, str]] = _build_timeline()
+ENTITA_IDX = len(TIMELINE_BEATS) - 1                 # 👈 NUOVO
+ENTITA_NOTIFY_TEXT = (TIMELINE_BEATS[ENTITA_IDX][1]
+                      .replace("[NOTIFICA OS]", "")
+                      .strip() or "Processo interrotto. Nessun salvataggio disponibile.")
 
 # ------------------------------- Debug helpers --------------------------------
 def fmt_time(sec: float) -> str:
@@ -331,22 +343,22 @@ def draw_grid(screen: pygame.Surface, current_beats: float, w: int, h: int):
             ring.fill((255, 255, 255, 12))
             screen.blit(ring, (0, 0), special_flags=pygame.BLEND_ADD)
 
-def draw_hud(screen, font_small, music_time, current_beats):
-    since_drop_beats = current_beats - PRE_ROLL_BEATS
-    if since_drop_beats >= 0:
-        bar_idx = int(since_drop_beats // 4) + 1
-        beat_in_bar = (since_drop_beats % 4.0) + 1.0
-    else:
-        bar_idx, beat_in_bar = 0, 0.0
-    lines = [
-        f"t={fmt_time(music_time)} | beats={current_beats:8.3f} | since_drop={max(0.0,since_drop_beats):8.3f}",
-        f"bar={bar_idx} | beat_in_bar={beat_in_bar:4.2f} | OFFSET={int(OFFSET_SEC*1000):+d} ms",
-        "Keys: [ / ] offset 10ms (Shift=50ms) | G grid | H HUD",
-    ]
-    y = 10
-    for s in lines:
-        hud = font_small.render(s, True, (180, 190, 205))
-        screen.blit(hud, (10, y)); y += 20
+# def draw_hud(screen, font_small, music_time, current_beats):
+#     since_drop_beats = current_beats - PRE_ROLL_BEATS
+#     if since_drop_beats >= 0:
+#         bar_idx = int(since_drop_beats // 4) + 1
+#         beat_in_bar = (since_drop_beats % 4.0) + 1.0
+#     else:
+#         bar_idx, beat_in_bar = 0, 0.0
+#     lines = [
+#         f"t={fmt_time(music_time)} | beats={current_beats:8.3f} | since_drop={max(0.0,since_drop_beats):8.3f}",
+#         f"bar={bar_idx} | beat_in_bar={beat_in_bar:4.2f} | OFFSET={int(OFFSET_SEC*1000):+d} ms",
+#         "Keys: [ / ] offset 10ms (Shift=50ms) | G grid | H HUD",
+#     ]
+#     y = 10
+#     for s in lines:
+#         hud = font_small.render(s, True, (180, 190, 205))
+#         screen.blit(hud, (10, y)); y += 20
 
 # ------------------------------- Scene runner ---------------------------------
 def run_intro(screen: pygame.Surface | None = None, clock: pygame.time.Clock | None = None):
@@ -401,6 +413,10 @@ def run_intro(screen: pygame.Surface | None = None, clock: pygame.time.Clock | N
     # Carica logo
     logo_surf, logo_rect = _load_and_scale_logo(LOGO_PATH, WIDTH, HEIGHT)
 
+    # --- EntityDirector per le notifiche ENTITÀ ---
+    director = EntityDirector(project_path)
+    entita_notified = False
+
     music_t0_ms = None  # calibra lo zero dell'audio
     block_idx = 0
     last_logged_idx = -1
@@ -445,6 +461,14 @@ def run_intro(screen: pygame.Surface | None = None, clock: pygame.time.Clock | N
         # Avanza blocco
         while block_idx < len(change_beats) and current_beats >= change_beats[block_idx] - 1e-6:
             block_idx += 1
+
+        # Notifica ENTITÀ (OS) quando si arriva al blocco giusto
+        if not entita_notified and block_idx >= ENTITA_IDX:
+            try:
+                director.queue_fake_toast(ENTITA_NOTIFY_TEXT)
+            except Exception as e:
+                print(f"[WARN] EntityDirector non funziona: {e}")
+            entita_notified = True
 
         # Log ingressi (HIT)
         if VERBOSE_HIT_LOG and block_idx != last_logged_idx:
@@ -494,21 +518,24 @@ def run_intro(screen: pygame.Surface | None = None, clock: pygame.time.Clock | N
             # niente testo durante il pre-roll
         else:
             # Dal drop in poi: NESSUN LOGO (sparisce di colpo), solo testo + glitch testuale
-            if random.random() < 0.35:
-                glitched = apply_glitch(surf)
-                grect = glitched.get_rect(center=(WIDTH // 2, HEIGHT // 2))
-                screen.blit(glitched, grect)
+            if block_idx == ENTITA_IDX:                      # ⇦ MOD: salta il draw del testo ENTITÀ
+                pass
             else:
-                screen.blit(surf, rect)
+                if random.random() < 0.35:
+                    glitched = apply_glitch(surf)
+                    grect = glitched.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+                    screen.blit(glitched, grect)
+                else:
+                    screen.blit(surf, rect)
 
         if SHOW_GRID: draw_grid(screen, current_beats, WIDTH, HEIGHT)
-        if SHOW_HUD:  draw_hud(screen, font_small, music_time, current_beats)
+        # if SHOW_HUD:  draw_hud(screen, font_small, music_time, current_beats)
 
         pygame.display.flip()
 
     pygame.mixer.music.stop()
     if we_created_screen:
-        pygame.quit()
+        pygame.quit()      
 
 # ------------------------------------------------------------------------------
 if __name__ == "__main__":
