@@ -1,3 +1,17 @@
+from pathlib import Path
+from dotenv import load_dotenv
+import sys
+
+def _load_env():
+    # se è un eseguibile PyInstaller, leggi .env.game accanto all’EXE
+    base = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
+    for cand in (base / ".env.game", base.parent / ".env.game"):
+        if cand.exists():
+            load_dotenv(cand)
+            break
+
+_load_env()
+
 import pygame
 import sys
 import webbrowser
@@ -33,7 +47,7 @@ VOLUME1_SCENES = {
 }
 
 VOLUME2_SCENES = {
-    "Eyes on Fire": (scene6_eyes_on_fire, "avvia_scena"),
+    "Eyes on Fire": (scene6_eyes_on_fire, "run_intro"),
 }
 
 # -----------------------------------------------------------------------------
