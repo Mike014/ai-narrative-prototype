@@ -1,6 +1,5 @@
 # scenes/Volume1/scene_lui_eyes_on_fire_sync145_dropstart.py
 # -*- coding: utf-8 -*-
-
 import sys, os, random
 from pathlib import Path
 from typing import List, Tuple, Optional

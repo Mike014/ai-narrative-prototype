@@ -1,6 +1,5 @@
 # scenes/Volume1/scene1_diary_breaks.py
 # -*- coding: utf-8 -*-
-
 import os
 import time
 import random

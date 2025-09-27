@@ -1,6 +1,5 @@
 # scenes/Volume1/scene4_os_collapse.py
 # -*- coding: utf-8 -*-
-
 import sys
 import os
 import math

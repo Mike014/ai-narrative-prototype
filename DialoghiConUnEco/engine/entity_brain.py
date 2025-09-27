@@ -585,7 +585,7 @@ class EntityBrain:
             return None
         
         ok_ratio = sum(1 for w in words if self._word_ok(w)) / n
-        if ok_ratio < 0.7:
+        if ok_ratio < 0.65:
             logging.debug("VALIDAZIONE: ok_ratio basso %.2f. words=%r raw=%r", ok_ratio, words, raw)
             return None
         

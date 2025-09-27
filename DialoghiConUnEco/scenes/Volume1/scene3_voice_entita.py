@@ -1,6 +1,5 @@
 # scenes/Volume1/scene3_voice_entita.py
 # -*- coding: utf-8 -*-
-
 import os
 import time
 import random

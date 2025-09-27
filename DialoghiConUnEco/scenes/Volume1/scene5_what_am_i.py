@@ -1,6 +1,5 @@
 # scenes/Volume1/scene5_what_am_i.py
 # -*- coding: utf-8 -*-
-
 import sys
 import os
 import random

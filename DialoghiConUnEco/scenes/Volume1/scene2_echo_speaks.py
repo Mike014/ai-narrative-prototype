@@ -1,6 +1,5 @@
 # scenes/Volume1/scene2_echo_speaks.py
 # -*- coding: utf-8 -*-
-
 import os
 import random
 import platform
