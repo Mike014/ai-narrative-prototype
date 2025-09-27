@@ -98,11 +98,11 @@ def _build_timeline() -> List[Tuple[float, str]]:
         "LUI: Occhi che bruciano. Secchi.",
         "LUI: Vado piano. Le nutro, le fiamme.",
         "LUI: Parlano loro, alla fine. Dicono chi sei.",
-        "LUI: Il pensiero di te non regge.",
+        "LUI: Il pensiero dell'essere non regge.",
         "LUI: Scorticato vivo nel cervello.",
-        "LUI: Ti amo.",
-        "LUI: Ma ti cerco solo nei corridoi della testa. Anticamere.",
-        "LUI: Ricordo chi sei. Non mi salva niente.\nNon lenirò il tuo dolore. Attraversalo.\nCome ho fatto io.\nFinché quel dolore non butta giù tutto il resto. Tutti i nemici.",
+        "LUI: Esisto.",
+        "LUI: Ma mi cerco solo nei corridoi della mente. Anticamere.",
+        "LUI: Ricordo chi sono. Non mi salva niente.\nNon lenirò il dolore. Attraversalo.\nCome ho fatto io.\nFinché quel dolore non butta giù tutto il resto. Tutti i fantasmi.",
     ]
     for beats, text in zip(lui_blocks, lui_texts):
         tl.append((beats, text))
