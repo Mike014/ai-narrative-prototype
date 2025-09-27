@@ -234,41 +234,85 @@ def glitch_logo_frame(logo: pygame.Surface, progress: float) -> pygame.Surface:
     return frame
 
 # ------------------------------- Fonts/render ---------------------------------
-def _pick_poem_font_path() -> str | None:
-    eb = ASSETS_DIR / "fonts" / "EB_Garamond" / "static" / "EBGaramond-Regular.ttf"
-    if eb.exists(): return str(eb)
-    rm = ASSETS_DIR / "fonts" / "Roboto_Mono" / "static" / "RobotoMono-Regular.ttf"
-    if rm.exists(): return str(rm)
-    fragile = ASSETS_DIR / "fonts" / "fragile.ttf"
-    if fragile.exists(): return str(fragile)
-    return None
+io_font_path   = ASSETS_DIR / "fonts" / "fragile.ttf"
+cosc_font_path = ASSETS_DIR / "fonts" / "reflective.ttf"
 
-def make_font(size=FONT_SIZE, bold=False) -> pygame.font.Font:
-    path = _pick_poem_font_path()
-    if path:
-        try: return pygame.font.Font(path, size)
-        except Exception: pass
-    try: return pygame.font.SysFont("DejaVu Sans", size, bold=bold)
+def make_font(size=FONT_SIZE, bold=False, who: str = "") -> pygame.font.Font:
+    # IO → fragile.ttf
+    if who.startswith("IO") and io_font_path.exists():
+        return pygame.font.Font(str(io_font_path), size)
+    # COSCIENZA → reflective.ttf
+    if who.startswith("COSCIENZA") and cosc_font_path.exists():
+        return pygame.font.Font(str(cosc_font_path), size)
+    # fallback generico
+    try: 
+        return pygame.font.SysFont("DejaVu Sans", size, bold=bold)
     except Exception:
-        try: return pygame.font.SysFont("Arial", size, bold=bold)
-        except Exception: return pygame.font.Font(None, size)
+        try: 
+            return pygame.font.SysFont("Arial", size, bold=bold)
+        except Exception: 
+            return pygame.font.Font(None, size)
 
-def render_text_center(font: pygame.font.Font, text: str, color, w: int, h: int):
-    if "\n" in text:
-        lines = text.split("\n")
-        line_surfs = [font.render(ln if ln else " ", True, color) for ln in lines]
-        total_h = sum(s.get_height() for s in line_surfs) + int((len(line_surfs)-1)*(font.get_linesize()*0.12))
-        canvas = pygame.Surface((w, total_h), pygame.SRCALPHA)
-        y = 0
-        for ls in line_surfs:
-            x = (w - ls.get_width()) // 2
-            canvas.blit(ls, (x, y)); y += ls.get_height() + int(font.get_linesize()*0.12)
-        rect = canvas.get_rect(center=(w//2, h//2))
-        return canvas, rect
-    else:
-        surf = font.render(text if text else " ", True, color)
-        rect = surf.get_rect(center=(w//2, h//2))
+def render_text_center(text: str, color, w: int, h: int):
+    who = (text.split(":")[0] if ":" in text else "").strip()
+    font = make_font(FONT_SIZE, bold=False, who=who)
+
+    # --- wrapping su larghezza max (90% della finestra) ---
+    max_width = int(w * 0.90)
+
+    def _wrap_paragraph(para: str) -> list[str]:
+        if not para:
+            return [""]  # preserva righe vuote
+        words = para.split(" ")
+        lines, current = [], ""
+        for word in words:
+            candidate = (current + " " + word) if current else word
+            if font.size(candidate)[0] <= max_width:
+                current = candidate
+            else:
+                if current:
+                    lines.append(current)
+                    current = word
+                else:
+                    # parola singola più larga di max_width → spezza "hard"
+                    chunk = ""
+                    for ch in word:
+                        c2 = chunk + ch
+                        if font.size(c2)[0] <= max_width:
+                            chunk = c2
+                        else:
+                            if chunk:
+                                lines.append(chunk)
+                            chunk = ch
+                    current = chunk
+        if current:
+            lines.append(current)
+        return lines
+
+    # Supporta newline manuali: wrappa ogni paragrafo
+    paragraphs = text.split("\n") if "\n" in text else [text]
+    lines: list[str] = []
+    for p in paragraphs:
+        lines.extend(_wrap_paragraph(p))
+
+    # Se tutto vuoto, rendi uno spazio (come prima)
+    if not any(lines):
+        surf = font.render(" ", True, color)
+        rect = surf.get_rect(center=(w // 2, h // 2))
         return surf, rect
+
+    # Render multiline centrato
+    line_surfs = [font.render(ln if ln else " ", True, color) for ln in lines]
+    spacing = int(font.get_linesize() * 0.12)
+    total_h = sum(s.get_height() for s in line_surfs) + spacing * (len(line_surfs) - 1)
+    canvas = pygame.Surface((w, total_h), pygame.SRCALPHA)
+    y = 0
+    for ls in line_surfs:
+        x = (w - ls.get_width()) // 2
+        canvas.blit(ls, (x, y))
+        y += ls.get_height() + spacing
+    rect = canvas.get_rect(center=(w // 2, h // 2))
+    return canvas, rect
 
 # ------------------------------- Grid / HUD -----------------------------------
 def draw_grid(screen: pygame.Surface, current_beats: float, w: int, h: int):
@@ -328,7 +372,7 @@ def run_intro(screen: pygame.Surface | None = None, clock: pygame.time.Clock | N
     # Pre-render testo
     pre_surfs = []
     for _, text in TIMELINE_BEATS:
-        surf, rect = render_text_center(font, text, TEXT_COLOR, WIDTH, HEIGHT)
+        surf, rect = render_text_center(text, TEXT_COLOR, WIDTH, HEIGHT)
         pre_surfs.append((surf, rect))
 
     change_beats = cumulative_change_beats(TIMELINE_BEATS)
