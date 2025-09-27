@@ -91,7 +91,7 @@ def scrivi_blocco_note(testo: str) -> Path:
     except Exception:
         desktop = Path.home() / "Desktop"
 
-    file_path = desktop / "entita.txt"
+    file_path = desktop / "ENTITA'.txt"
     try:
         with open(file_path, "w", encoding="utf-8") as f:
             f.write((testo or "").strip() + "\n\nTI VEDO")
