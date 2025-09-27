@@ -1,66 +1,110 @@
 import pygame
 import sys
-from scenes import scene1
-from scenes import scene2
-from scenes import scene3
-from scenes import scene4
-from scenes import What_Am_I
 from menu import mostra_menu
 
-# Imposta il mixer in modo stabile per Windows + laptop moderni
+# Import scene modules (Volume 1)
+from scenes.Volume1 import scene1_diary_breaks
+from scenes.Volume1 import scene2_echo_speaks
+from scenes.Volume1 import scene3_voice_entita
+from scenes.Volume1 import scene4_os_collapse
+from scenes.Volume1 import scene5_what_am_i
+
+# -----------------------------------------------------------------------------
+# Setup audio + pygame
+# -----------------------------------------------------------------------------
 pygame.mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=2048)
 pygame.init()
-
-# Più canali e 2 riservati per effetti UI/ducking
 pygame.mixer.set_num_channels(16)
 pygame.mixer.set_reserved(2)
 
+# -----------------------------------------------------------------------------
+# Scene map per Volume 1: titolo → (modulo, funzione da chiamare)
+# -----------------------------------------------------------------------------
+VOLUME1_SCENES = {
+    "The Diary Breaks": (scene1_diary_breaks, "avvia_scena"),
+    "When the Echo Speaks": (scene2_echo_speaks, "avvia_scena"),
+    "The Voice of ENTITA’": (scene3_voice_entita, "avvia_scena"),
+    "The OS Collapse": (scene4_os_collapse, "avvia_scena"),
+    "What Am I?": (scene5_what_am_i, "run_intro"),
+}
 
-def mostra_scelta_scene(screen, clock):
-    """Mini-menu per scegliere quale scena avviare"""
-    font = pygame.font.SysFont("consolas", 48)
-    options = ["Scena 1", "Scena 2", "Scena 3", "Scena 4", "What Am I?", "Torna indietro"]
-    selected = 0
+# -----------------------------------------------------------------------------
+# UI helper: lista verticale con titolo
+# -----------------------------------------------------------------------------
+def draw_list_menu(screen, clock, title, options, initial_index=0):
+    """
+    Ritorna la stringa selezionata oppure None se l'utente torna indietro (ESC/Backspace).
+    """
+    try:
+        title_font = pygame.font.SysFont("consolas", 56)
+        item_font  = pygame.font.SysFont("consolas", 44)
+        hint_font  = pygame.font.SysFont("consolas", 22)
+    except Exception:
+        title_font = pygame.font.Font(None, 56)
+        item_font  = pygame.font.Font(None, 44)
+        hint_font  = pygame.font.Font(None, 22)
 
-    choosing = True
-    while choosing:
+    selected = initial_index
+
+    while True:
         screen.fill((0, 0, 0))
 
+        # Titolo
+        title_surf = title_font.render(title, True, (200, 200, 255))
+        title_rect = title_surf.get_rect(center=(screen.get_width() // 2, 160))
+        screen.blit(title_surf, title_rect)
+
+        # Opzioni
+        start_y = 280
+        line_h = 70
         for i, opt in enumerate(options):
-            color = (255, 0, 0) if i == selected else (255, 255, 255)
-            text_surface = font.render(opt, True, color)
-            rect = text_surface.get_rect(center=(screen.get_width() // 2, 300 + i * 80))
-            screen.blit(text_surface, rect)
+            color = (255, 70, 70) if i == selected else (235, 235, 235)
+            surf = item_font.render(opt, True, color)
+            rect = surf.get_rect(center=(screen.get_width() // 2, start_y + i * line_h))
+            screen.blit(surf, rect)
+
+        # Hints
+        hint = hint_font.render("↑↓ per muoverti  •  INVIO per selezionare  •  ESC per tornare indietro", True, (140, 140, 140))
+        screen.blit(hint, (screen.get_width()//2 - hint.get_width()//2, screen.get_height() - 60))
 
         pygame.display.flip()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                sys.exit()
-
+                sys.exit(0)
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
+                if event.key == pygame.K_ESCAPE or event.key == pygame.K_BACKSPACE:
+                    return None
+                elif event.key == pygame.K_UP:
                     selected = (selected - 1) % len(options)
                 elif event.key == pygame.K_DOWN:
                     selected = (selected + 1) % len(options)
                 elif event.key == pygame.K_RETURN:
-                    if options[selected] == "Scena 1":
-                        return "scene1"
-                    elif options[selected] == "Scena 2":
-                        return "scene2"
-                    elif options[selected] == "Scena 3":
-                        return "scene3"
-                    elif options[selected] == "Scena 4":
-                        return "scene4"
-                    elif options[selected] == "What Am I?":
-                        return "what_am_i"
-                    else:
-                        return "indietro"
+                    return options[selected]
 
-        clock.tick(30)
+        clock.tick(60)
 
+# -----------------------------------------------------------------------------
+# Menu Volume
+# -----------------------------------------------------------------------------
+def mostra_volumi(screen, clock):
+    options = ["Volume 1", "Torna indietro"]
+    sel = draw_list_menu(screen, clock, "SELEZIONA VOLUME", options)
+    if sel == "Volume 1":
+        return "volume1"
+    return None
 
+def mostra_scelta_scene_volume1(screen, clock):
+    options = list(VOLUME1_SCENES.keys()) + ["Torna indietro"]
+    sel = draw_list_menu(screen, clock, "VOLUME 1", options)
+    if sel == "Torna indietro" or sel is None:
+        return None
+    return sel
+
+# -----------------------------------------------------------------------------
+# Main loop
+# -----------------------------------------------------------------------------
 def main():
     print("Avvio gioco...")
     pygame.init()
@@ -70,32 +114,36 @@ def main():
     pygame.display.set_caption("Dialoghi con un’Eco")
     clock = pygame.time.Clock()
 
-    # Avvia menu e aspetta selezione
-    scelta = mostra_menu(screen, clock)
+    while True:
+        scelta = mostra_menu(screen, clock)  # il tuo menu principale esistente
 
-    if scelta == "inizia":
-        scena_scelta = mostra_scelta_scene(screen, clock)
-        if scena_scelta == "scene1":
-            scene1.avvia_scena(screen, clock)
-        elif scena_scelta == "scene2":
-            scene2.avvia_scena(screen, clock)
-        elif scena_scelta == "scene3":
-            scene3.avvia_scena(screen, clock)
-        elif scena_scelta == "scene4":
-            scene4.avvia_scena(screen, clock)
-        elif scena_scelta == "what_am_i":
-            What_Am_I.run_intro()
+        if scelta == "inizia":
+            volume = mostra_volumi(screen, clock)
+            if volume == "volume1":
+                scena = mostra_scelta_scene_volume1(screen, clock)
+                if scena and scena in VOLUME1_SCENES:
+                    module, func_name = VOLUME1_SCENES[scena]
+                    # Avvio scena
+                    getattr(module, func_name)(screen, clock)
+                    # Al ritorno dalla scena si rientra al menu principale
+                    continue
+                # Torna al menu principale se annullato
+                continue
+
+        elif scelta == "crediti":
+            # TODO: chiama la tua scena crediti quando pronta
+            print("TODO: scena crediti")
+            # piccolo delay per non rimbalzare subito
+            pygame.time.delay(500)
+
+        elif scelta == "esci":
+            pygame.quit()
+            sys.exit(0)
+
         else:
-            main()  # torna al menu principale
+            # Protezione: se mostra_menu restituisce altro/None, ripresenta
+            pygame.time.delay(100)
 
-    elif scelta == "crediti":
-        # Qui puoi importare e chiamare scene_crediti.avvia_crediti()
-        print("TODO: scena crediti")
-
-    elif scelta == "esci":
-        pygame.quit()
-        sys.exit()
-
-
+# -----------------------------------------------------------------------------
 if __name__ == "__main__":
     main()

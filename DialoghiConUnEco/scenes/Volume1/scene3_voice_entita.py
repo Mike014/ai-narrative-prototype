@@ -1,21 +1,91 @@
-# scenes/scene3.py
+# scenes/Volume1/scene3_voice_entita.py
 # -*- coding: utf-8 -*-
 
 import os
-import pygame
+import time
+import random
+import platform
+import subprocess
 from pathlib import Path
+
+import pygame
+from dotenv import load_dotenv
+
 from engine.entity_brain import EntityBrain
 
-BASE_DIR = Path(__file__).resolve().parents[1]
+# -----------------------------------------------------------------------------
+# Env (per eventuali API key usate da EntityBrain)
+# -----------------------------------------------------------------------------
+load_dotenv()
 
-def asset(*parts) -> str:
-    return str(BASE_DIR.joinpath(*parts))
+# -----------------------------------------------------------------------------
+# Project root discovery (robusto a spostamenti di file)
+# -----------------------------------------------------------------------------
+def find_project_root(start: Path) -> Path:
+    p = start
+    for _ in range(6):  # risali max 6 livelli
+        if (p / "assets").exists() and (p / "engine").exists():
+            return p
+        p = p.parent
+    return start  # fallback
 
-# --------------------------------------------------------------------------------------
-# Avvio Scena 3 con timer
-# --------------------------------------------------------------------------------------
+THIS_FILE = Path(__file__).resolve()
+BASE_DIR = find_project_root(THIS_FILE)
+ASSETS_DIR = BASE_DIR / "assets"
+
+def asset_path(*parts) -> str:
+    """assets/... → string path"""
+    return str(ASSETS_DIR.joinpath(*parts))
+
+# -----------------------------------------------------------------------------
+# Helpers
+# -----------------------------------------------------------------------------
+def render_text_with_outline(text, font, text_color, outline_color=(0, 0, 0)):
+    base = font.render(text, True, text_color)
+    outline = pygame.Surface((base.get_width() + 2, base.get_height() + 2), pygame.SRCALPHA)
+    for dx in [-1, 0, 1]:
+        for dy in [-1, 0, 1]:
+            if dx != 0 or dy != 0:
+                outline.blit(font.render(text, True, outline_color), (1 + dx, 1 + dy))
+    outline.blit(base, (1, 1))
+    return outline
+
+def log_entita_response(risposta: str):
+    if not risposta:
+        return
+    try:
+        desktop = Path(os.environ.get("USERPROFILE", "")) / "Desktop"
+        if not desktop.exists():
+            desktop = Path.home() / "Desktop"
+        log_path = desktop / "log_entita.txt"
+        with open(log_path, "a", encoding="utf-8") as logf:
+            timestamp = pygame.time.get_ticks() / 1000.0
+            logf.write(f"[{timestamp:.2f}s] ENTITÀ: {risposta}\n")
+    except Exception as e:
+        print("Errore salvataggio log:", e)
+
+def load_background(screen):
+    """Carica sfondo scena3 con fallback."""
+    candidates = [
+        ("background", "scena3_bg.png"),
+        ("background", "room.png"),
+        ("background", "mac.png"),
+    ]
+    for parts in candidates:
+        p = ASSETS_DIR.joinpath(*parts)
+        if p.exists():
+            img = pygame.image.load(str(p)).convert()
+            return pygame.transform.scale(img, screen.get_size()), str(p)
+    surf = pygame.Surface(screen.get_size())
+    surf.fill((0, 0, 0))
+    return surf, "(fill black)"
+
+# -----------------------------------------------------------------------------
+# Avvio Scena 3 — Conversazione a tempo (Utente ↔ ENTITÀ)
+# -----------------------------------------------------------------------------
 def avvia_scena(screen, clock):
-    print("Avvio scena 3...")
+    print("[DEBUG][SCENA3] BASE_DIR:", BASE_DIR)
+    print("[DEBUG][SCENA3] ASSETS_DIR:", ASSETS_DIR)
 
     pygame.mixer.set_num_channels(16)
     CHANNEL_GLITCH = pygame.mixer.Channel(14)
@@ -23,31 +93,30 @@ def avvia_scena(screen, clock):
     screen_width, screen_height = screen.get_size()
 
     # ---------------- Audio ----------------
-    ambient_music_path = asset("assets", "audio", "s3.wav")
+    ambient_music_path = asset_path("audio", "s3.wav")           # ESISTE
+    glitch_path        = asset_path("audio", "Glitch.ogg")       # ESISTE
     if os.path.exists(ambient_music_path):
         pygame.mixer.music.load(ambient_music_path)
         pygame.mixer.music.set_volume(0.25)
         pygame.mixer.music.play(-1)
-
-    glitch_sound = pygame.mixer.Sound(asset("assets", "audio", "Glitch.ogg"))
+    glitch_sound = pygame.mixer.Sound(glitch_path)
     glitch_sound.set_volume(0.7)
 
     # ---------------- Grafica ----------------
-    bg_path = asset("assets", "background", "scena3_bg.png")
-    if os.path.exists(bg_path):
-        background_image = pygame.image.load(bg_path).convert()
-        background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
-    else:
-        background_image = pygame.Surface((screen_width, screen_height))
-        background_image.fill((0, 0, 0))
+    background_image, chosen_bg = load_background(screen)
+    print(f"[DEBUG][SCENA3] Background: {chosen_bg}")
+
+    # ---------------- Font ----------------
+    entity_font_path = ASSETS_DIR / "fonts" / "entity.ttf"
+    user_font_path   = ASSETS_DIR / "fonts" / "fragile.ttf"
+
+    ENTITY_FONT = pygame.font.Font(str(entity_font_path), 28)
+    USER_FONT   = pygame.font.Font(str(user_font_path), 24)
+    ALERT_FONT  = pygame.font.Font(str(user_font_path), 32)
 
     # ---------------- Stato ENTITÀ ----------------
     # respond_prob 0.5 per cadenza più “cinematografica”
     entity = EntityBrain("entity_model", respond_prob=0.5)
-
-    ENTITY_FONT = pygame.font.Font(asset("assets", "fonts", "entity.ttf"), 28)
-    USER_FONT   = pygame.font.Font(asset("assets", "fonts", "fragile.ttf"), 24)
-    ALERT_FONT  = pygame.font.Font(asset("assets", "fonts", "fragile.ttf"), 32)
 
     user_input = ""
     entity_response = ""
@@ -65,14 +134,13 @@ def avvia_scena(screen, clock):
         if not text:
             return
         history.append((role, text.strip()))
-        # Mantieni solo le ultime MAX_TURNS*2 righe
         if len(history) > MAX_TURNS * 2:
             del history[0:len(history) - MAX_TURNS * 2]
 
     def build_context() -> str:
         # Etichette per il prompt del cervello: IO (utente) e ENTITÀ (modello)
         lines = []
-        for role, text in history[-MAX_TURNS*2:]:
+        for role, text in history[-MAX_TURNS * 2:]:
             if role == "USER":
                 lines.append(f"IO: {text}")
             else:
@@ -82,8 +150,6 @@ def avvia_scena(screen, clock):
     # ---------------- Timer ----------------
     session_duration = 120000  # 2 minuti in ms
     start_time = pygame.time.get_ticks()
-
-    # Traccia “ultimo parlato” di ENTITÀ (per calcolare silence_sec in secondi)
     entita_last_spoke_ms = start_time
 
     # Throttle locale scena
@@ -116,55 +182,52 @@ def avvia_scena(screen, clock):
                     last_user_submit = True
                     msg = user_input.strip()
                     if msg:
-                        # --- Memoria: aggiungi la battuta dell'utente (sempre, anche se ENTITÀ tace) ---
+                        # --- Memoria: salva battuta utente ---
                         push("USER", msg)
 
-                        # --- Calcola silenzio (pygame usa ms -> converti in secondi) ---
+                        # --- Silenzio in secondi dall'ultima risposta ENTITÀ ---
                         silence_sec = max(0.0, (pygame.time.get_ticks() - entita_last_spoke_ms) / 1000.0)
 
                         # --- Throttle/Gate di scena ---
                         now_ms = pygame.time.get_ticks()
 
-                        # evita risposte troppo ravvicinate dopo una battuta di ENTITÀ
+                        # cooldown dopo risposta ENTITÀ
                         if now_ms < next_allowed_speak_ms:
                             user_input = ""
                             entity_response = ""
                             show_entity = False
-                            # non bloccare la partita, semplicemente “silenzio”
                             continue
 
-                        # evita spam di invii troppo ravvicinati dell’utente
+                        # anti-spam utente
                         if (now_ms - last_user_enter_ms) < int(MIN_GAP_AFTER_USER_SEC * 1000):
                             user_input = ""
                             entity_response = ""
                             show_entity = False
                             continue
 
-                        # gate probabilistico extra di scena
-                        import random as _r
-                        if _r.random() > SCENE_GATE_P:
+                        # gate probabilistico
+                        if random.random() > SCENE_GATE_P:
                             user_input = ""
                             entity_response = ""
                             show_entity = False
-                            # aggiorna timestamp dell'ultimo invio utente
                             last_user_enter_ms = now_ms
                             continue
 
-                        # --- Tensione: baseline + ramp col silenzio + boost glitch (più morbidi) ---
+                        # --- Tensione: baseline + ramp col silenzio + boost se glitch suona ---
                         base_tension = 0.22
-                        ramp = min(0.25, (silence_sec / 45.0) * 0.25)       # crescita più lenta
+                        ramp = min(0.25, (silence_sec / 45.0) * 0.25)
                         glitch_boost = 0.05 if CHANNEL_GLITCH.get_busy() else 0.0
                         tension = max(0.0, min(1.0, base_tension + ramp + glitch_boost))
 
                         context = {"tension": tension, "silence_sec": silence_sec}
 
-                        # --- Costruisci il “dialogo fino a questo punto” per ENTITÀ ---
+                        # --- Costruisci contesto dialogico ---
                         dialog_context = build_context()
 
                         # --- Chiedi ad ENTITÀ (può anche tacere) ---
                         response = entity.generate_response(dialog_context, context=context, num_candidates=3)
                         user_input = ""
-                        last_user_enter_ms = now_ms  # registriamo l'invio utente
+                        last_user_enter_ms = now_ms
 
                         if response:
                             CHANNEL_GLITCH.play(glitch_sound)
@@ -174,10 +237,11 @@ def avvia_scena(screen, clock):
                             entita_last_spoke_ms = entity_timer
                             entity_alpha = 255
 
-                            # Memorizza risposta
+                            # Memorizza e logga risposta
                             push("ENTITA", response)
+                            log_entita_response(response)
 
-                            # Imposta il prossimo “permesso” a parlare (cooldown locale)
+                            # Imposta prossimo “permesso” (cooldown locale)
                             next_allowed_speak_ms = pygame.time.get_ticks() + int(MIN_GAP_AFTER_REPLY_SEC * 1000)
                         else:
                             entity_response = ""
@@ -218,7 +282,7 @@ def avvia_scena(screen, clock):
             # ---------------- ENTITÀ o silenzio ----------------
             if show_entity:
                 elapsed_entity = pygame.time.get_ticks() - entity_timer
-                text_surface = ENTITY_FONT.render(entity_response, True, (255, 55, 55))
+                text_surface = render_text_with_outline(entity_response, ENTITY_FONT, (255, 55, 55))
                 text_surface.set_alpha(entity_alpha)
                 text_rect = text_surface.get_rect(center=(screen_width // 2, screen_height // 2))
                 screen.blit(text_surface, text_rect)

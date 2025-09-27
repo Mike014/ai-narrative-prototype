@@ -1,41 +1,66 @@
-# scenes/intro_poem.py
+# scenes/Volume1/scene5_what_am_i.py
 # -*- coding: utf-8 -*-
+
 import sys
+import os
 import random
 from pathlib import Path
+
 import numpy as np
 import pygame
+from dotenv import load_dotenv
 
-# ---------------------------------------------------------------------------------
-# Config
-# ---------------------------------------------------------------------------------
-BASE_DIR = Path(__file__).resolve().parents[1]
-AUDIO_PATH = BASE_DIR / "assets" / "audio" / "what_am_I_song.wav"
+# -----------------------------------------------------------------------------
+# Env (per eventuali API key / config usate altrove)
+# -----------------------------------------------------------------------------
+load_dotenv()
 
+# -----------------------------------------------------------------------------
+# Project root discovery (robusto a spostamenti di file)
+# -----------------------------------------------------------------------------
+def find_project_root(start: Path) -> Path:
+    p = start
+    for _ in range(6):  # risali max 6 livelli
+        if (p / "assets").exists() and (p / "engine").exists():
+            return p
+        p = p.parent
+    return start  # fallback
+
+THIS_FILE  = Path(__file__).resolve()
+BASE_DIR   = find_project_root(THIS_FILE)
+ASSETS_DIR = BASE_DIR / "assets"
+
+def asset_path(*parts) -> str:
+    """Restituisce un path assoluto sotto assets/"""
+    return str(ASSETS_DIR.joinpath(*parts))
+
+# -----------------------------------------------------------------------------
+# Config (può essere adattata alla finestra passata da main)
+# -----------------------------------------------------------------------------
 WIDTH, HEIGHT = 1280, 720
 FPS = 60
 FONT_SIZE = 48
 TEXT_COLOR = (245, 245, 250)
 BG_COLOR = (0, 0, 0)
 
-# Sync (80 BPM)
+# Sync (80 BPM circa)
 BPM = 80.8
-BEAT_SEC = 60.0 / BPM          # 0.75 s
+BEAT_SEC = 60.0 / BPM          # ~0.743 s
 TOTAL_SEC = 105.0              # 1:45
 TOTAL_BEATS = int(round(TOTAL_SEC / BEAT_SEC))  # 140 beat
 
 # Offset iniziale (correggibile live con hotkeys)
-OFFSET_SEC = 1.117   # >0 = ritarda i cambi; <0 = anticipa
+OFFSET_SEC = 1.117             # >0 = ritarda i cambi; <0 = anticipa
 OFFSET_STEP_SMALL = 0.010      # 10 ms
 OFFSET_STEP_LARGE = 0.050      # 50 ms
 
-# Grid/Metronomo (toggle con G)
+# Grid/Metronomo (toggle con G/H)
 SHOW_GRID = False
-SHOW_HUD = True
+SHOW_HUD = True  # HUD testuale disattivato nel rendering (commentato sotto)
 
-# ---------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Timeline beat-perfect (come concordato)
-# ---------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 TIMELINE_BEATS = [
     # 4 beat ciascuno (0:00–0:39)
     (4, "Mi sentivo strano, lontano da tutto."),
@@ -65,9 +90,9 @@ TIMELINE_BEATS = [
     (8, "E allora urlerò piano,\nperché la verità brucia come sale."),
 ]
 
-# ---------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Glitch "safe"
-# ---------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 def apply_glitch(surface: pygame.Surface) -> pygame.Surface:
     w, h = surface.get_width(), surface.get_height()
     if w < 4 or h < 4:
@@ -89,10 +114,33 @@ def apply_glitch(surface: pygame.Surface) -> pygame.Surface:
     glitched = pygame.surfarray.make_surface(out)
     return glitched.convert_alpha()
 
-# ---------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Helpers
-# ---------------------------------------------------------------------------------
-def make_font(size=FONT_SIZE, bold=True) -> pygame.font.Font:
+# -----------------------------------------------------------------------------
+def _pick_poem_font_path() -> str | None:
+    """Preferisci font di progetto; fallback a system fonts."""
+    # EB Garamond (presente nella repo)
+    eb = ASSETS_DIR / "fonts" / "EB_Garamond" / "static" / "EBGaramond-Regular.ttf"
+    if eb.exists():
+        return str(eb)
+    # Roboto Mono (presente nella repo)
+    rm = ASSETS_DIR / "fonts" / "Roboto_Mono" / "static" / "RobotoMono-Regular.ttf"
+    if rm.exists():
+        return str(rm)
+    # fragile.ttf (stilistico)
+    fragile = ASSETS_DIR / "fonts" / "fragile.ttf"
+    if fragile.exists():
+        return str(fragile)
+    return None
+
+def make_font(size=FONT_SIZE, bold=False) -> pygame.font.Font:
+    path = _pick_poem_font_path()
+    if path:
+        try:
+            return pygame.font.Font(path, size)
+        except Exception:
+            pass
+    # Fallback a system fonts
     try:
         return pygame.font.SysFont("DejaVu Sans", size, bold=bold)
     except Exception:
@@ -101,22 +149,22 @@ def make_font(size=FONT_SIZE, bold=True) -> pygame.font.Font:
         except Exception:
             return pygame.font.Font(None, size)
 
-def render_text_center(font: pygame.font.Font, text: str, color) -> tuple[pygame.Surface, pygame.Rect]:
+def render_text_center(font: pygame.font.Font, text: str, color, w: int, h: int) -> tuple[pygame.Surface, pygame.Rect]:
     if "\n" in text:
         lines = text.split("\n")
         line_surfs = [font.render(ln if ln else " ", True, color) for ln in lines]
         total_h = sum(s.get_height() for s in line_surfs) + int((len(line_surfs) - 1) * (font.get_linesize() * 0.12))
-        canvas = pygame.Surface((WIDTH, total_h), pygame.SRCALPHA)
+        canvas = pygame.Surface((w, total_h), pygame.SRCALPHA)
         y = 0
         for ls in line_surfs:
-            x = (WIDTH - ls.get_width()) // 2
+            x = (w - ls.get_width()) // 2
             canvas.blit(ls, (x, y))
             y += ls.get_height() + int(font.get_linesize() * 0.12)
-        rect = canvas.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        rect = canvas.get_rect(center=(w // 2, h // 2))
         return canvas, rect
     else:
         surf = font.render(text if text else " ", True, color)
-        rect = surf.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        rect = surf.get_rect(center=(w // 2, h // 2))
         return surf, rect
 
 def cumulative_change_beats(timeline_beats):
@@ -127,71 +175,75 @@ def cumulative_change_beats(timeline_beats):
         beats.append(acc)
     return beats  # es. [4,8,12,...,140]
 
-# ---------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Metronomo visivo + HUD
-# ---------------------------------------------------------------------------------
-def draw_grid(screen: pygame.Surface, current_beats: float):
+# -----------------------------------------------------------------------------
+def draw_grid(screen: pygame.Surface, current_beats: float, w: int, h: int):
     beat_num = int(current_beats)
     phase = current_beats - beat_num   # 0..1
-    # flash su ogni beat
     alpha = int(120 * (1.0 - phase) ** 2)
-    bar = pygame.Surface((WIDTH, 2), pygame.SRCALPHA)
+    bar = pygame.Surface((w, 2), pygame.SRCALPHA)
     bar.fill((255, 255, 255, max(0, min(120, alpha))))
-    screen.blit(bar, (0, HEIGHT - 10))
-    # downbeat ogni 4 beat
+    screen.blit(bar, (0, h - 10))
     if beat_num % 4 == 0 and phase < 0.15:
-        ring = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        ring = pygame.Surface((w, h), pygame.SRCALPHA)
         ring.fill((255, 255, 255, 12))
         screen.blit(ring, (0, 0), special_flags=pygame.BLEND_ADD)
 
-# def draw_hud(screen: pygame.Surface, current_beats: float, next_change_beat: int | None, offset_sec: float):
-#     hud_font = make_font(size=18, bold=False)
-#     lines = [
-#         f"Beat: {current_beats:.2f}",
-#         f"Offset: {int(offset_sec*1000):+d} ms",
-#     ]
-#     if next_change_beat is not None:
-#         lines.append(f"Next change @ beat: {next_change_beat}")
-#     y = 10
-#     for s in lines:
-#         surf = hud_font.render(s, True, (180, 190, 205))
-#         screen.blit(surf, (10, y))
-#         y += 20
-
-# ---------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Scena
-# ---------------------------------------------------------------------------------
-def run_intro():
-    global OFFSET_SEC, SHOW_GRID, SHOW_HUD
+# -----------------------------------------------------------------------------
+def run_intro(screen: pygame.Surface | None = None, clock: pygame.time.Clock | None = None):
+    """
+    Se chiamata senza argomenti, crea la sua finestra 1280x720.
+    Se riceve screen/clock esterni, li riusa e adatta WIDTH/HEIGHT.
+    """
+    global OFFSET_SEC, SHOW_GRID, SHOW_HUD, WIDTH, HEIGHT
 
-    pygame.init()
-    pygame.mixer.pre_init(44100, -16, 2, 512)
-    pygame.mixer.init()
+    print(f"[DEBUG][SCENA5] BASE_DIR: {BASE_DIR}")
+    print(f"[DEBUG][SCENA5] ASSETS_DIR: {ASSETS_DIR}")
 
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("Solo Umani - Intro (80 BPM beat-locked)")
+    # Setup pygame se serve
+    we_created_screen = False
+    if screen is None or clock is None:
+        pygame.init()
+        pygame.mixer.pre_init(44100, -16, 2, 512)
+        pygame.mixer.init()
+        screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        pygame.display.set_caption("Solo Umani - Intro (beat-locked)")
+        clock = pygame.time.Clock()
+        we_created_screen = True
+    else:
+        # Adatta dimensioni al display esistente
+        WIDTH, HEIGHT = screen.get_size()
 
-    clock = pygame.time.Clock()
-    font = make_font()
+    font = make_font(FONT_SIZE, bold=False)
 
-    # Pre-render testo
+    # Pre-render testo (dimensioni dipendono da WIDTH/HEIGHT)
     pre_surfs = []
     for _, text in TIMELINE_BEATS:
-        surf, rect = render_text_center(font, text, TEXT_COLOR)
+        surf, rect = render_text_center(font, text, TEXT_COLOR, WIDTH, HEIGHT)
         pre_surfs.append((surf, rect))
 
     # Soglie cumulative in BEATS
-    change_beats = cumulative_change_beats(TIMELINE_BEATS)  # es. [4,8,12,...,140]
+    change_beats = cumulative_change_beats(TIMELINE_BEATS)
 
-    # Musica
+    # Musica (fallback: prova what_am_I_song.wav → what_am_I.wav)
+    audio_candidates = [
+        asset_path("audio", "what_am_I_song.wav"),
+        asset_path("audio", "what_am_I.wav"),
+    ]
     music_started = False
-    if AUDIO_PATH.exists():
-        try:
-            pygame.mixer.music.load(str(AUDIO_PATH))
-            pygame.mixer.music.play()
-            music_started = True
-        except Exception as e:
-            print("Audio non caricato:", e)
+    for ap in audio_candidates:
+        if os.path.exists(ap):
+            try:
+                pygame.mixer.music.load(ap)
+                pygame.mixer.music.play()
+                music_started = True
+                print(f"[DEBUG][SCENA5] Audio: {ap}")
+                break
+            except Exception as e:
+                print("[SCENA5] Audio non caricato:", ap, e)
 
     block_idx = 0
     running = True
@@ -202,9 +254,10 @@ def run_intro():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-                pygame.mixer.music.stop()
-                pygame.quit()
-                sys.exit()
+                if we_created_screen:
+                    pygame.mixer.music.stop()
+                    pygame.quit()
+                    sys.exit(0)
             if event.type == pygame.KEYDOWN:
                 # exit/skip
                 if event.key in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_SPACE):
@@ -233,7 +286,7 @@ def run_intro():
             music_time = pygame.time.get_ticks() / 1000.0
         current_beats = (music_time + OFFSET_SEC) / BEAT_SEC  # beat float dall'inizio
 
-        # Avanza blocco secondo BEATS (niente secondi → niente drift)
+        # Avanza blocco secondo BEATS (no drift)
         while block_idx < len(change_beats) and current_beats >= change_beats[block_idx] - 1e-6:
             block_idx += 1
 
@@ -258,16 +311,31 @@ def run_intro():
                 screen.blit(surf, rect)
 
         if SHOW_GRID:
-            draw_grid(screen, current_beats)
+            draw_grid(screen, current_beats, WIDTH, HEIGHT)
 
+        # HUD opzionale (commentato)
         # if SHOW_HUD:
+        #     hud_font = make_font(size=18)
         #     next_change = change_beats[block_idx] if block_idx < len(change_beats) else None
-        #     draw_hud(screen, current_beats, next_change, OFFSET_SEC)
+        #     lines = [
+        #         f"Beat: {current_beats:.2f}",
+        #         f"Offset: {int(OFFSET_SEC*1000):+d} ms",
+        #         f"Next: {next_change}" if next_change is not None else "",
+        #     ]
+        #     y = 10
+        #     for s in lines:
+        #         if not s:
+        #             continue
+        #         hud = hud_font.render(s, True, (180, 190, 205))
+        #         screen.blit(hud, (10, y))
+        #         y += 20
 
         pygame.display.flip()
 
     pygame.mixer.music.stop()
+    if we_created_screen:
+        pygame.quit()
 
-# ---------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 if __name__ == "__main__":
     run_intro()
