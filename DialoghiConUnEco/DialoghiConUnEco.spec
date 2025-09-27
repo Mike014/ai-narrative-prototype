@@ -19,6 +19,7 @@ _datas = [
     ('Documenti_GD', 'Documenti_GD'),
     ('entita_metrics.csv', '.'),
     ('log_entita.txt', '.'),
+    ('.env.game', '.'),
 ]
 
 # includi .env.game se presente (NON la tua .env con chiavi vere!)
@@ -35,7 +36,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['tensorflow','tensorflow_intel','keras','tf_keras','torch'],
     noarchive=False,
 )
 
@@ -52,7 +53,8 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,
+    debug=True,
+    console=True,
     icon=os.path.join(SPEC_DIR, 'assets', 'background', 'logo.ico'),  # ← robusto
 )
 

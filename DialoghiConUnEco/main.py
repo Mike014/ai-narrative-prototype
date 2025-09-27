@@ -1,4 +1,10 @@
+# --- PyInstaller frozen path fix (PRIMA DI TUTTO) ---
+import os, sys
 from pathlib import Path
+if getattr(sys, 'frozen', False):
+    # Porta la working dir accanto all'eseguibile
+    os.chdir(Path(sys.executable).parent)
+# -----------------------------------------------
 from dotenv import load_dotenv
 import sys
 
