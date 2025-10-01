@@ -33,3 +33,26 @@ __pycache__/
 # Checkpoint/weights locali (se usi modelli finetunati)
 *.pt
 *.ckpt
+
+# File di sistema
+.DS_Store
+!*.template
+
+# File di configurazione di rilascio
+.relay.env
+.relay.env.template
+.env.relay
+.env.game
+.env.template
+.env.local
+
+# File di build
+build/
+dist/
+
+# File spec
+*.spec
+
+.venv/
+
+
