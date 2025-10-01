@@ -6,7 +6,6 @@ if getattr(sys, 'frozen', False):
     os.chdir(Path(sys.executable).parent)
 # -----------------------------------------------
 from dotenv import load_dotenv
-import sys
 
 def _load_env():
     # se è un eseguibile PyInstaller, leggi .env.game accanto all’EXE
@@ -19,7 +18,6 @@ def _load_env():
 _load_env()
 
 import pygame
-import sys
 import webbrowser
 from menu import mostra_menu
 
@@ -32,9 +30,10 @@ from scenes.Volume1 import scene5_what_am_i
 
 # Import scene modules (Volume 2)
 from scenes.Volume2 import scene6_eyes_on_fire
+from scenes.Volume2 import scene7_smells_like_gray
 
 # -----------------------------------------------------------------------------
-# Setup audio + pygame
+# // Setup audio + pygame
 # -----------------------------------------------------------------------------
 pygame.mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=2048)
 pygame.init()
@@ -42,8 +41,33 @@ pygame.mixer.set_num_channels(16)
 pygame.mixer.set_reserved(2)
 
 # -----------------------------------------------------------------------------
-# Scene map per Volume 1: titolo → (modulo, funzione da chiamare)
+# // Dispatcher per avviare le scene
 # -----------------------------------------------------------------------------
+CANDIDATE_FUNCS = ("avvia_scena", "run_intro", "main", "start", "run")
+
+def run_scene_module(module, screen, clock, prefer: str | None = None) -> bool:
+    """
+    Tenta di avviare una scena cercando prima 'prefer' (se dato), poi i nomi in CANDIDATE_FUNCS.
+    Ritorna True se ha avviato qualcosa, False se nessuna funzione valida è stata trovata.
+    """
+    # 1) prova la preferita se specificata
+    if prefer:
+        fn = getattr(module, prefer, None)
+        if callable(fn):
+            fn(screen, clock)
+            return True
+    # 2) prova i nomi standard
+    for name in CANDIDATE_FUNCS:
+        fn = getattr(module, name, None)
+        if callable(fn):
+            fn(screen, clock)
+            return True
+    return False
+
+# -----------------------------------------------------------------------------
+# // Scene map per Volume 1/2
+#   - puoi mettere (modulo) o (modulo, "nome_funzione")
+# // -----------------------------------------------------------------------------
 VOLUME1_SCENES = {
     "The Diary Breaks": (scene1_diary_breaks, "avvia_scena"),
     "When the Echo Speaks": (scene2_echo_speaks, "avvia_scena"),
@@ -54,10 +78,12 @@ VOLUME1_SCENES = {
 
 VOLUME2_SCENES = {
     "Eyes on Fire": (scene6_eyes_on_fire, "run_intro"),
+    # Se qui la funzione della scena 7 non fosse "avvia_scena", il dispatcher la troverà comunque
+    "Smells Like Gray": (scene7_smells_like_gray, "avvia_scena"),
 }
 
 # -----------------------------------------------------------------------------
-# UI helper: lista verticale con titolo
+# // UI helper: lista verticale con titolo
 # -----------------------------------------------------------------------------
 def draw_list_menu(screen, clock, title, options, initial_index=0):
     """
@@ -114,7 +140,7 @@ def draw_list_menu(screen, clock, title, options, initial_index=0):
         clock.tick(60)
 
 # -----------------------------------------------------------------------------
-# Menu Volume
+# // Menu Volume
 # -----------------------------------------------------------------------------
 def mostra_volumi(screen, clock):
     options = ["Volume 1", "Volume 2", "Torna indietro"]
@@ -140,12 +166,11 @@ def mostra_scelta_scene_volume2(screen, clock):
     return sel
 
 # -----------------------------------------------------------------------------
-# Main loop
+# // Main loop
 # -----------------------------------------------------------------------------
 def main():
     print("Avvio gioco...")
-    pygame.init()
-    pygame.mixer.init()
+    # pygame già init sopra; mixer pure
 
     screen = pygame.display.set_mode((1280, 960))
     pygame.display.set_caption("Dialoghi con un’Eco")
@@ -159,15 +184,22 @@ def main():
             if volume == "volume1":
                 scena = mostra_scelta_scene_volume1(screen, clock)
                 if scena and scena in VOLUME1_SCENES:
-                    module, func_name = VOLUME1_SCENES[scena]
-                    getattr(module, func_name)(screen, clock)
+                    entry = VOLUME1_SCENES[scena]
+                    module, prefer = (entry if isinstance(entry, tuple) else (entry, None))
+                    ok = run_scene_module(module, screen, clock, prefer)
+                    if not ok:
+                        print(f"[ERRORE] Nessuna funzione avviabile trovata per scena V1: {scena}")
                     continue
                 continue
+
             elif volume == "volume2":
                 scena = mostra_scelta_scene_volume2(screen, clock)
                 if scena and scena in VOLUME2_SCENES:
-                    module, func_name = VOLUME2_SCENES[scena]
-                    getattr(module, func_name)(screen, clock)
+                    entry = VOLUME2_SCENES[scena]
+                    module, prefer = (entry if isinstance(entry, tuple) else (entry, None))
+                    ok = run_scene_module(module, screen, clock, prefer)
+                    if not ok:
+                        print(f"[ERRORE] Nessuna funzione avviabile trovata per scena V2: {scena}")
                     continue
                 continue
 
