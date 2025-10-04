@@ -31,6 +31,7 @@ from scenes.Volume1 import scene5_what_am_i
 # Import scene modules (Volume 2)
 from scenes.Volume2 import scene6_eyes_on_fire
 from scenes.Volume2 import scene7_smells_like_gray
+from scenes.Volume2 import scene8_Four_AM
 
 # -----------------------------------------------------------------------------
 # // Setup audio + pygame
@@ -78,9 +79,10 @@ VOLUME1_SCENES = {
 
 VOLUME2_SCENES = {
     "Eyes on Fire": (scene6_eyes_on_fire, "run_intro"),
-    # Se qui la funzione della scena 7 non fosse "avvia_scena", il dispatcher la troverà comunque
     "Smells Like Gray": (scene7_smells_like_gray, "avvia_scena"),
+    "Four AM": (scene8_Four_AM, "avvia_scena"), 
 }
+
 
 # -----------------------------------------------------------------------------
 # // UI helper: lista verticale con titolo
