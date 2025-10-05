@@ -96,7 +96,36 @@ Under the following terms:
 
 📄 Full license text: [https://creativecommons.org/licenses/by-nc-nd/4.0/](https://creativecommons.org/licenses/by-nc-nd/4.0/)
 
-> Any unauthorized use of this code, model, or concept — including reproduction, training, or integration into commercial or research products — will be considered a violation of intellectual property and subject to legal action.
+## Project Status & Collaboration
+**Status:** Personal/authorial project.  
+**Collaboration:** Not seeking collaborators. **No pull requests** will be accepted.  
+**Feedback:** Issues for feedback are welcome; unsolicited PRs will be closed.
+
+## License Summary
+**Creative assets** (texts/poetry, narrative materials, audio, images):  
+Licensed under **CC BY-NC-ND 4.0** — no commercial use, no derivatives.  
+Full text: https://creativecommons.org/licenses/by-nc-nd/4.0/
+
+**Source code** (engine, scripts, tools, configs):  
+**Copyright © 2025 Michele Grimaldi. All Rights Reserved.**  
+Unless you have my prior **written** permission, you may **not** modify, fork outside GitHub for PR purposes, redistribute, publish binaries, sublicense, or create derivative works.
+
+## Allowed
+- View the repository and **run locally** for personal, non-commercial evaluation.
+- Share an **unmodified** link to this repository with proper credit.
+
+## Not Allowed (without written permission)
+- **No derivatives:** no modified forks, ports, patches, repackaging, or spin-offs.
+- **No redistribution:** no binaries/installers, mirrors, or re-uploads anywhere.
+- **No commercial use** of any kind.
+- **No public hosting/demos** for others to access.
+- **No ML/AI usage:** do not use the code or assets for dataset creation, embeddings, 
+  training, fine-tuning, or evaluation of models.
+
+## Enforcement
+Unauthorized derivative works, redistribution, or misuse may result in **DMCA takedowns**
+and **legal action**. Derivative releases are **not permitted** and may expose you to liability.
+For any exception, **ask first** at: <mikgrimaldi7@gmail.com> — permissions must be **in writing**.
 
 **Project Showcase** - [Watch the Video](https://drive.google.com/file/d/1_aOsyjw9U2sP4UoKko1HF1RCH5PD2LYW/view)
 
