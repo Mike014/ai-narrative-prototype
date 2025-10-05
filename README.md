@@ -104,7 +104,6 @@ Under the following terms:
 ## License Summary
 **Creative assets** (texts/poetry, narrative materials, audio, images):  
 Licensed under **CC BY-NC-ND 4.0** — no commercial use, no derivatives.  
-Full text: https://creativecommons.org/licenses/by-nc-nd/4.0/
 
 **Source code** (engine, scripts, tools, configs):  
 **Copyright © 2025 Michele Grimaldi. All Rights Reserved.**  
