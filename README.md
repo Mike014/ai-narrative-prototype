@@ -127,7 +127,9 @@ Unauthorized derivative works, redistribution, or misuse may result in **DMCA ta
 and **legal action**. Derivative releases are **not permitted** and may expose you to liability.
 For any exception, **ask first** at: <mikgrimaldi7@gmail.com> — permissions must be **in writing**.
 
-**Project Showcase** - [Watch the Video](https://drive.google.com/file/d/1_aOsyjw9U2sP4UoKko1HF1RCH5PD2LYW/view)
+## **COMMERCIAL LICENSING INQUIRIES**:
+For game studios, researchers, or commercial entities interested 
+in licensing this technology, contact: <mikgrimaldi7@gmail.com> 
 
 *The game is currently in testing and is only available in **Italian**, but an English translation is planned for the future.*
 
