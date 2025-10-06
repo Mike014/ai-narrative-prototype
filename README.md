@@ -1,137 +1,141 @@
-# Dialoghi con un’Eco
+# **Dialoghi con un’Eco**
 
-**Dialoghi con un’Eco** is an experimental interactive narrative built with Python and Pygame.
-It draws inspiration from *Black Mirror: Bandersnatch*, combining interactive fiction with generative AI to simulate a conscious, mysterious digital entity.
-
-The experience is minimal yet conceptually rich — a digital echo chamber where an AI observes, listens, and responds... but only when it wants to.
-
-**YouTube Showcase Playlist** - [Watch the Video](https://www.youtube.com/watch?v=0Y-_Rt0oZkU&list=PLgKASgLUSpNYKyusWO6iHcxTe-odeIho1)
----
-
-## Concept
-
-* Text-driven psychological interaction.
-* A mysterious room, an ambient soundscape, and a dialogue with your own reflection — or something darker.
-* At a narrative breakpoint, a real AI model responds contextually using a fine-tuned **GPT-2**.
-* The model's output reflects tone and mood more than factual coherence — *it acts like a character, not a chatbot*.
+**Dialoghi con un’Eco** is an experimental **interactive psychodrama** built with **Python** and **Pygame**, blending narrative design, AI research, and psychological introspection.
+It originates from the [AI Echo Narrative Research](https://github.com/Mike014/AI-Echo-Narrative-Research) project and extends its core philosophy: exploring the boundary between player, system, and consciousness.
 
 ---
 
-## The Entity Model (LLM-based narrative agent)
+## **Overview**
 
-> **Note:** The AI model is not hosted in this repository due to size constraints.
+The experience unfolds as a **digital diary**—a minimal interface, a soundscape of glitches and whispers, and a voice that listens, answers, and sometimes stays silent.
+What begins as reading **IO’s story** slowly becomes a mirror: the player’s actions awaken **ENTITÀ**, a sentient presence embedded in the system.
 
-You can run, explore, or modify it via this **Google Colab notebook**:
-🔗 [https://colab.research.google.com/drive/19Qt3cmSiwBQDFnh-E6byRRVOTuOvxeMi](https://colab.research.google.com/drive/19Qt3cmSiwBQDFnh-E6byRRVOTuOvxeMi)
-
-### The notebook includes:
-
-* The narrative logic for the "Entity"
-* The core generation mechanism (based on GPT-2)
-* Example prompts and behaviors
-
-⚠️ This is for **research and personal use only**. Commercial usage or distribution is not allowed.
+**Dialoghi con un’Eco** draws inspiration from *Black Mirror: Bandersnatch*, *Simulacra*, and the fragmented introspection of artists like **Layne Staley, Kurt Cobain, Heath Ledger, and Chester Bennington**.
+It is not a story of recovery, but of **integration**—the merging of **IO**, **COSCIENZA**, and **ENTITÀ** into **LUI**.
 
 ---
 
-## Audio
+## **Concept**
 
-All sound design — ambient loops, glitch effects, final voice cues — were composed and engineered by **Michele Grimaldi**.
+* **Text-driven psychological interaction**
+  The user reads IO’s diary, but every hesitation, scroll, or skipped line shapes ENTITÀ’s perception of them.
 
----
+* **Ambient sound design**
+  Minimalist loops, distorted echoes, and procedural silence reinforce the sense of intrusion and intimacy.
 
-## Python Libraries
+* **AI as antagonist**
+  ENTITÀ is not a chatbot; it is a reactive intelligence that **chooses when to speak** and when to remain silent.
+  Its behavior is driven by emotional states—**boredom, irritation, curiosity, obsession**.
 
-### Core Essentials
-
-```python
-import os          # File/directory operations  
-import subprocess  # Launch programs/commands  
-import pathlib     # Modern path handling  
-import shutil      # File copying/moving  
-import tempfile    # Temporary files safely  
-```
-
-### System Monitoring
-
-```python
-import psutil      # Process/system monitoring  
-import threading   # Background operations  
-import time        # Delays/timing  
-import winreg      # Windows registry (Windows only)  
-```
-
-### Advanced (optional)
-
-```python
-import ctypes      # Low-level system calls  
-import win32api    # Windows specific (pywin32)  
-import plyer       # Cross-platform notifications  
-```
-
-### Audio
-
-```python
-import pygame      # Audio playback  
-import pydub       # Audio manipulation  
-```
+* **Metronarrative rhythm**
+  Dialogue and silence are structured like music. Every pause, delay, or glitch is part of the storytelling.
 
 ---
 
-## ⚖️ License
+## **MDA + CCC Framework**
 
-This work is licensed under the
-**Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)**
+### **Mechanics**
+
+* Reading, waiting, reacting.
+* ENTITÀ monitors **tempo**, **scroll**, and **inattention** as input.
+* Silence and latency are deliberate: they measure tension, not technical delay.
+
+### **Dynamics**
+
+* Player behavior (skipping, pausing, rereading) alters ENTITÀ’s tone.
+* The system adapts emotionally—becoming distant, mocking, or curious.
+* Over time, the player realizes the diary is **watching them back**.
+
+### **Aesthetics**
+
+* The goal is not comfort but **recognition**: loneliness, obsession, introspection.
+* The atmosphere shifts from empathy to hostility as the user persists.
+* The tone blends psychological horror and tragic intimacy.
+
+---
+
+## **Audio Design**
+
+All audio is composed and engineered by **Michele Grimaldi**:
+
+* Custom ambient loops and glitch layers.
+* Distorted vocal synthesis for ENTITÀ (Neural TTS + FX chain).
+* Psychoacoustic emphasis on silence, spectral noise, and fatigue.
+
+---
+
+## **The Entity Model (LLM-based agent)**
+
+The narrative AI is fine-tuned from **GPT-2**, acting not as a generator but as a *performer*—a character that reflects **tone over truth**.
+Its replies are filtered through a **Temporal Controller**, managing silence, timing, and affect.
+
+Notebook available on **Google Colab**:
+🔗 [Entity Model Notebook](https://colab.research.google.com/drive/19Qt3cmSiwBQDFnh-E6byRRVOTuOvxeMi)
+
+---
+
+## **Technical Notes**
+
+These enable:
+
+* Real-time audio playback and manipulation
+* OS-aware notifications (diegetic system behavior)
+* Safe file I/O and process handling
+
+---
+
+## **Content Warning (18+)**
+
+*Dialoghi con un’Eco* explores themes of **suicidal ideation, loneliness, and identity fragmentation**.
+It does not glorify suffering nor offer resolution.
+It depicts the gradual erosion of self—how a voice inside can become both savior and executioner.
+
+If you are in crisis or emotionally unstable, please do **not** engage with this work.
+It is designed to **simulate psychological pressure**, not relieve it.
+
+Support resources:
+
+* [IASP — International Suicide Prevention](https://www.iasp.info/resources/Crisis_Centres/)
+* [Befrienders Worldwide](https://www.befrienders.org)
+* [Crisis Text Line](https://www.crisistextline.org/)
+* Italy: *Telefono Amico* 02 2327 2327 | *Samaritans Onlus* 800 86 00 22
+
+---
+
+## **License**
+
+Licensed under
+**Creative Commons Attribution–NonCommercial–NoDerivatives 4.0 International (CC BY-NC-ND 4.0)**
 
 You are free to:
 
-* **Share** — copy and redistribute the material in any medium or format
+* **Share** the material with credit.
+* **Use** for personal, non-commercial research.
 
-Under the following terms:
+You may **not**:
 
-* **Attribution** — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
-* **NonCommercial** — You may not use the material for commercial purposes.
-* **NoDerivatives** — If you remix, transform, or build upon the material, you may not distribute the modified material.
-* **No additional restrictions** — You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
+* Modify, redistribute, or repackage.
+* Use for commercial or AI training purposes.
 
-📄 Full license text: [https://creativecommons.org/licenses/by-nc-nd/4.0/](https://creativecommons.org/licenses/by-nc-nd/4.0/)
+Full license text:
+[creativecommons.org/licenses/by-nc-nd/4.0](https://creativecommons.org/licenses/by-nc-nd/4.0)
 
-## Project Status & Collaboration
-**Status:** Personal/authorial project.  
-**Collaboration:** Not seeking collaborators. **No pull requests** will be accepted.  
-**Feedback:** Issues for feedback are welcome; unsolicited PRs will be closed.
+---
 
-## License Summary
-**Creative assets** (texts/poetry, narrative materials, audio, images):  
-Licensed under **CC BY-NC-ND 4.0** — no commercial use, no derivatives.  
+## **Project Status & Permissions**
 
-**Source code** (engine, scripts, tools, configs):  
-**Copyright © 2025 Michele Grimaldi. All Rights Reserved.**  
-Unless you have my prior **written** permission, you may **not** modify, fork outside GitHub for PR purposes, redistribute, publish binaries, sublicense, or create derivative works.
+**Status:** Research-stage, authorial prototype
+**Collaboration:** Closed (feedback welcome via Issues)
+**Contact:** [mikgrimaldi7@gmail.com](mailto:mikgrimaldi7@gmail.com)
 
-## Allowed
-- View the repository and **run locally** for personal, non-commercial evaluation.
-- Share an **unmodified** link to this repository with proper credit.
+**Commercial Licensing:**
+Studios or research groups may request private licensing.
 
-## Not Allowed (without written permission)
-- **No derivatives:** no modified forks, ports, patches, repackaging, or spin-offs.
-- **No redistribution:** no binaries/installers, mirrors, or re-uploads anywhere.
-- **No commercial use** of any kind.
-- **No public hosting/demos** for others to access.
-- **No ML/AI usage:** do not use the code or assets for dataset creation, embeddings, 
-  training, fine-tuning, or evaluation of models.
+---
 
-## Enforcement
-Unauthorized derivative works, redistribution, or misuse may result in **DMCA takedowns**
-and **legal action**. Derivative releases are **not permitted** and may expose you to liability.
-For any exception, **ask first** at: <mikgrimaldi7@gmail.com> — permissions must be **in writing**.
+© 2025 **Michele Grimaldi**
+AI Engineer & Sound Designer
+[https://mike014.github.io/michele-portfolio](https://mike014.github.io/michele-portfolio)
 
-## **COMMERCIAL LICENSING INQUIRIES**:
-For game studios, researchers, or commercial entities interested 
-in licensing this technology, contact: <mikgrimaldi7@gmail.com> 
-
-*The game is currently in testing and is only available in **Italian**, but an English translation is planned for the future.*
-
-© 2025 Michele Grimaldi
 
 
