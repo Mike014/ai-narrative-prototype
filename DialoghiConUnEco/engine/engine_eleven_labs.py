@@ -25,7 +25,7 @@ API_KEY: Optional[str] = (
 )
 
 # La tua voce ENTITÀ
-VOICE_ID: str = os.getenv("ENTITA_VOICE_ID", "i9qjWtU9ESfMXufwwLOm")
+VOICE_ID: str = os.getenv("ENTITA_VOICE_ID", "Zqyu82LW6pQ3xLgBN7eP")
 
 # Il modello del preview che stai usando nella UI.
 # Se non hai accesso a v3 via API, cambia in "eleven_multilingual_v2" o "eleven_turbo_v2".

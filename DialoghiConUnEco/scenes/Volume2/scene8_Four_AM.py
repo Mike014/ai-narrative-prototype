@@ -10,7 +10,7 @@ from engine.engine_eleven_labs import ensure_cached_tts, VOICE_ID, DEFAULT_MODEL
 # === OPZIONI SCENA ===========================================================
 USE_AMBIENT = True       # True = musica ON (sotto), False = solo voce
 USE_DUCKING = True          # se USE_AMBIENT True: abbassa musica mentre parla
-AMBIENT_VOL = 0.25          # volume musica base
+AMBIENT_VOL = 0.75          # volume musica base
 DUCKED_VOL  = 0.07          # volume musica mentre parla ENTITÀ
 # ============================================================================
 
@@ -62,7 +62,7 @@ def ensure_audio_files():
     if Path(path).stat().st_size < 1024:
         try: Path(path).unlink()
         except Exception: pass
-        fallback_fmt = "mp3_44100_32"
+        fallback_fmt = "mp3_44100_96"
         path = ensure_cached_tts(
             MONOLOGO, str(MP3_FILE),
             voice_id=VOICE_ID, model_id=DEFAULT_MODEL, output_format=fallback_fmt
