@@ -11,7 +11,7 @@ The experience unfolds as a **digital diary**—a minimal interface, a soundscap
 What begins as reading **IO’s story** slowly becomes a mirror: the player’s actions awaken **ENTITÀ**, a sentient presence embedded in the system.
 
 **Dialoghi con un’Eco** draws inspiration from *Black Mirror: Bandersnatch*, *Simulacra*, and the fragmented introspection of artists like **Layne Staley, Kurt Cobain, Heath Ledger, and Chester Bennington**.
-It is not a story of recovery, but of **integration**—the merging of **IO**, **COSCIENZA**, and **ENTITÀ** into **LUI**.
+It is not a story of recovery, but of **integration**.
 
 ---
 
