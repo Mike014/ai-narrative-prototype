@@ -32,6 +32,7 @@ from scenes.Volume1 import scene5_what_am_i
 from scenes.Volume2 import scene6_eyes_on_fire
 from scenes.Volume2 import scene7_smells_like_gray
 from scenes.Volume2 import scene8_Four_AM
+from scenes.Volume2 import scene9_ThE_Thruth   
 
 # -----------------------------------------------------------------------------
 # // Setup audio + pygame
@@ -81,6 +82,7 @@ VOLUME2_SCENES = {
     "Eyes on Fire": (scene6_eyes_on_fire, "run_intro"),
     "Smells Like Gray": (scene7_smells_like_gray, "avvia_scena"),
     "Four AM": (scene8_Four_AM, "avvia_scena"), 
+    "ThE Thruth": (scene9_ThE_Thruth, "avvia_scena"),
 }
 
 
