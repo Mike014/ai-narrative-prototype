@@ -32,7 +32,7 @@ It is not a story of recovery, but of **integration**.
 
 ---
 
-## **MDA + CCC Framework**
+## **MDA**
 
 ### **Mechanics**
 
