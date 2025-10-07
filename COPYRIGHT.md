@@ -1,6 +1,6 @@
 # COPYRIGHT
 
-**Project:** AI Echo Narrative Research — research project related to [Dialoghi con un’Eco](https://github.com/Mike014/ai-narrative-prototype)
+**Project:** [Dialoghi con un’Eco](https://github.com/Mike014/ai-narrative-prototype)
 **Author:** Michele Grimaldi (“Mike014”)
 **Copyright:** © 2025 Michele Grimaldi. All Rights Reserved.
 
