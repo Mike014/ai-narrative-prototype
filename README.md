@@ -135,9 +135,9 @@ Studios or research groups may request private licensing.
 
 ---
 
-© 2025 **Michele Grimaldi**
+© 2025 **[Michele Grimaldi](https://mike014.github.io/michele-portfolio)**
 AI Engineer & Sound Designer
-[https://mike014.github.io/michele-portfolio](https://mike014.github.io/michele-portfolio)
+
 
 
 
