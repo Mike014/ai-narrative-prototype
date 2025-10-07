@@ -1,5 +1,7 @@
 # **Dialoghi con un’Eco**
 
+<img src="DialoghiConUnEco/assets/background/logo_Dialoghi_con_un_eco.png" alt="logo_Dialoghi_con_un_eco" title="logo_Dialoghi_con_un_eco" width="500">
+
 **Dialoghi con un’Eco** is an experimental **interactive psychodrama** built with **Python** and **Pygame**, blending narrative design, AI research, and psychological introspection.
 It originates from the [AI Echo Narrative Research](https://github.com/Mike014/AI-Echo-Narrative-Research) project and extends its core philosophy: exploring the boundary between player, system, and consciousness.
 
