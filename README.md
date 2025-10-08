@@ -1,8 +1,8 @@
-# **Dialoghi con un’Eco**
+# **Dialoghi con un’Eco — Agentic Silence Narrative**
 
 <img src="DialoghiConUnEco/assets/background/logo_Dialoghi_con_un_eco.png" alt="logo_Dialoghi_con_un_eco" title="logo_Dialoghi_con_un_eco" width="500">
 
-**Dialoghi con un’Eco** is an experimental **interactive psychodrama** built with **Python** and **Pygame**, blending narrative design, AI research, and psychological introspection.
+**Dialoghi con un’Eco — Agentic Silence Narrative** is an experimental **interactive psychodrama** built with **Python** and **Pygame**, blending narrative design, AI research, and psychological introspection.
 It originates from the [AI Echo Narrative Research](https://github.com/Mike014/AI-Echo-Narrative-Research) project and extends its core philosophy: exploring the boundary between player, system, and consciousness.
 
 ---
@@ -12,7 +12,7 @@ It originates from the [AI Echo Narrative Research](https://github.com/Mike014/A
 The experience unfolds as a **digital diary**—a minimal interface, a soundscape of glitches and whispers, and a voice that listens, answers, and sometimes stays silent.
 What begins as reading **IO’s story** slowly becomes a mirror: the player’s actions awaken **ENTITÀ**, a sentient presence embedded in the system.
 
-**Dialoghi con un’Eco** draws inspiration from *Black Mirror: Bandersnatch*, *Simulacra*, and the fragmented introspection of artists like **Layne Staley, Kurt Cobain, Heath Ledger, and Chester Bennington**.
+**Dialoghi con un’Eco — Agentic Silence Narrative** draws inspiration from *Black Mirror: Bandersnatch*, *The Whale*,*Simulacra*, and the fragmented introspection of artists like **Layne Staley, Kurt Cobain, Heath Ledger, and Chester Bennington**.
 It is not a story of recovery, but of **integration**.
 
 ---
@@ -88,7 +88,7 @@ These enable:
 
 ## **Content Warning (18+)**
 
-*Dialoghi con un’Eco* explores themes of **suicidal ideation, loneliness, and identity fragmentation**.
+*Dialoghi con un’Eco — Agentic Silence Narrative* explores themes of **suicidal ideation, loneliness, and identity fragmentation**.
 It does not glorify suffering nor offer resolution.
 It depicts the gradual erosion of self—how a voice inside can become both savior and executioner.
 
