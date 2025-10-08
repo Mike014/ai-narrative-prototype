@@ -12,7 +12,7 @@ It originates from the [AI Echo Narrative Research](https://github.com/Mike014/A
 The experience unfolds as a **digital diary**—a minimal interface, a soundscape of glitches and whispers, and a voice that listens, answers, and sometimes stays silent.
 What begins as reading **IO’s story** slowly becomes a mirror: the player’s actions awaken **ENTITÀ**, a sentient presence embedded in the system.
 
-**Dialoghi con un’Eco — Agentic Silence Narrative** draws inspiration from *Black Mirror: Bandersnatch*, *The Whale*,*Simulacra*, and the fragmented introspection of artists like **Layne Staley, Kurt Cobain, Heath Ledger, and Chester Bennington**.
+**Dialoghi con un’Eco — Agentic Silence Narrative** draws inspiration from *Black Mirror: Bandersnatch*, *The Whale*, *Simulacra*, and the fragmented introspection of artists like **Layne Staley, Kurt Cobain, Heath Ledger, and Chester Bennington**.
 It is not a story of recovery, but of **integration**.
 
 ---
